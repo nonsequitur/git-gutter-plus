@@ -326,7 +326,9 @@ character for signs of changes"
 
 (defun git-gutter:add-local-hooks ()
   (add-hook 'after-save-hook        'git-gutter nil t)
-  (add-hook 'after-revert-hook      'git-gutter nil t)
+  ;; Turn off `git-gutter-mode' while reverting to prevent any redundant calls to
+  ;; `git-gutter'.
+  (add-hook 'before-revert-hook     'git-gutter:turn-off nil t)
   (add-hook 'change-major-mode-hook 'git-gutter:reenable-after-major-mode-change nil t)
   (if git-gutter:window-config-change-function
       (add-hook 'window-configuration-change-hook
@@ -334,7 +336,7 @@ character for signs of changes"
 
 (defun git-gutter:remove-local-hooks ()
   (remove-hook 'after-save-hook        'git-gutter t)
-  (remove-hook 'after-revert-hook      'git-gutter t)
+  (remove-hook 'before-revert-hook     'git-gutter:turn-off t)
   (remove-hook 'change-major-mode-hook 'git-gutter:reenable-after-major-mode-change t)
   (if git-gutter:window-config-change-function
       (remove-hook 'window-configuration-change-hook
@@ -360,9 +362,11 @@ character for signs of changes"
   (if global-git-gutter-mode
       (progn
         (add-hook 'find-file-hook 'git-gutter:turn-on)
+        (add-hook 'after-revert-hook 'git-gutter:turn-on)
         (add-hook 'after-change-major-mode-hook 'git-gutter:reenable-buffers)
         (git-gutter:in-all-buffers (git-gutter:turn-on)))
     (remove-hook 'find-file-hook 'git-gutter:turn-on)
+    (remove-hook 'after-revert-hook 'git-gutter:turn-on)
     (remove-hook 'after-change-major-mode-hook 'git-gutter:reenable-buffers)
     (git-gutter:in-all-buffers (git-gutter:turn-off))))
 
