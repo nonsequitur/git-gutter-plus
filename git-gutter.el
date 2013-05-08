@@ -42,9 +42,9 @@ character for signs of changes"
   :type 'integer
   :group 'git-gutter)
 
-(defcustom git-gutter:diff-option ""
-  "Option of 'git diff'"
-  :type 'string
+(defcustom git-gutter:diff-options nil
+  "List of strings containing extra arguments to 'git diff'"
+  :type 'list
   :group 'git-gutter)
 
 (defcustom git-gutter:separator-sign nil
@@ -133,23 +133,23 @@ character for signs of changes"
   `(let ((it ,test))
      (when it ,@body)))
 
-(defun git-gutter:execute-command (cmd file)
+(defun git-gutter:call-git (args file)
   (if (not (file-remote-p file))
-      (call-process-shell-command cmd nil t)
-    (process-file-shell-command cmd nil t)))
+      (apply #'call-process "git" nil t nil args)
+    (apply #'process-file "git" nil t nil args)))
 
 (defun git-gutter:in-git-repository-p (file)
   (with-temp-buffer
-    (let ((cmd "git rev-parse --is-inside-work-tree"))
-      (when (zerop (git-gutter:execute-command cmd file))
+    (let ((args '("rev-parse" "--is-inside-work-tree")))
+      (when (zerop (git-gutter:call-git args file))
         (goto-char (point-min))
         (string= "true" (buffer-substring-no-properties
                          (point) (line-end-position)))))))
 
 (defun git-gutter:root-directory (file)
   (with-temp-buffer
-    (let* ((cmd "git rev-parse --show-toplevel")
-           (ret (git-gutter:execute-command cmd file)))
+    (let* ((args '("rev-parse" "--show-toplevel"))
+           (ret (git-gutter:call-git args file)))
       (when (zerop ret)
         (goto-char (point-min))
         (let ((root (buffer-substring-no-properties (point) (line-end-position))))
@@ -174,16 +174,16 @@ character for signs of changes"
         (goto-char (1- (point-max)))) ; Skip trailing newline
       (buffer-substring curpoint (point)))))
 
-(defsubst git-gutter:diff-command (file)
-  (format "git --no-pager diff --no-color --no-ext-diff -U0 %s \"%s\""
-          git-gutter:diff-option file))
+(defsubst git-gutter:diff-args (file)
+  (delq nil (list "--no-pager" "diff" "--no-color" "--no-ext-diff" "-U0"
+                  git-gutter:diff-options file)))
 
 (defun git-gutter:diff (curfile)
-  (let ((cmd (git-gutter:diff-command curfile))
+  (let ((args (git-gutter:diff-args curfile))
         (regexp "^@@ -\\([0-9]+\\),?\\([0-9]*\\) \\+\\([0-9]+\\),?\\([0-9]*\\) @@")
         (file (buffer-file-name))) ;; for tramp
     (with-temp-buffer
-      (when (zerop (git-gutter:execute-command cmd file))
+      (when (zerop (git-gutter:call-git args file))
         (goto-char (point-min))
         (loop while (re-search-forward regexp nil t)
               for orig-line = (string-to-number (match-string 1))
