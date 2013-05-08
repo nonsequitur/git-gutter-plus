@@ -82,11 +82,6 @@ character for signs of changes"
   :type 'string
   :group 'git-gutter)
 
-(defcustom git-gutter:verbosity 4
-  "Log/message level. 4 means all, 0 nothing."
-  :type 'integer
-  :group 'git-guter)
-
 (defface git-gutter:separator
     '((t (:foreground "cyan" :weight bold)))
   "Face of separator"
@@ -511,8 +506,7 @@ character for signs of changes"
   "Move to next diff hunk"
   (interactive "p")
   (if (not git-gutter:diffinfos)
-      (when (> git-gutter:verbosity 3)
-        (message "No changes in buffer"))
+      (message "No changes in buffer")
     (let* ((is-reverse (< arg 0))
            (diffinfos git-gutter:diffinfos)
            (len (length diffinfos))
