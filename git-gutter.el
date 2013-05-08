@@ -692,6 +692,75 @@ START and END (inclusive). START and END are both line numbers starting with 1."
             del-line del-len
             add-line add-len)))
 
+
+;;; Committing
+
+;;;###autoload
+(defun git-gutter:commit ()
+  (interactive)
+  (let ((file (buffer-file-name))
+        (dir default-directory))
+    (require 'magit)
+    (setq magit-pre-log-edit-window-configuration (current-window-configuration))
+    (magit-log-edit)
+    (git-gutter:show-staged-changes file dir)))
+
+;;;###autoload
+(defun git-gutter:stage-and-commit ()
+  (interactive)
+  (git-gutter:stage-hunks)
+  (git-gutter:commit))
+
+(defun git-gutter:show-staged-changes (file dir)
+  (save-selected-window
+    (let* ((buf    (get-buffer-create "*Staged Changes*"))
+           (window (get-buffer-window buf)))
+      (if window
+          (select-window window)
+        (if (<= (length (window-list)) 2)
+            (split-window))
+        (pop-to-buffer buf)))
+    (erase-buffer)
+    (let ((default-directory dir))
+      (git-gutter:call-git (list "diff" "--staged") file))
+    (goto-char (point-min))
+    (diff-mode)))
+
+;;; Use Magit for committing staged hunks.
+;;
+;; `magit-log-edit-commit' expects `magit-find-status-buffer' to return the Magit
+;; status buffer from which the commit edit was launched.
+;; But when the commit edit is started by git-gutter, a status buffer is not always
+;; present.
+;; Therefore, `magit-log-edit-commit' is patched to use a custom version of
+;; `magit-find-status-buffer' that returns the current log edit buffer if no status
+;; buffer is opened. This works fine, since Magit will accept any buffer that has the
+;; correct `default-directory' set.
+;;
+;; Using Magit has two side effects:
+;; 1. .git/MERGE_MSG gets deleted after commiting. (But before that, its contents
+;; will have been pasted into the log edit buffer by Magit.)
+;; 2. The buffer local value of `process-environment' is erased in the buffer that
+;; started the commit edit. This is a bug in Magit that will be fixed in the next
+;; minor release.
+
+(defvar git-gutter:orig-find-status-buffer)
+
+(defvar git-gutter:find-status-buf-or-cur-buf
+  (lambda (&optional dir)
+    (or (funcall git-gutter:orig-find-status-buffer dir)
+        (current-buffer))))
+
+(defadvice magit-log-edit-commit (around without-status-buffer compile activate)
+  ;; Rebind `magit-find-status-buffer' to `git-gutter:find-status-buf-or-cur-buf'
+  ;; while `magit-log-edit-commit' is running.
+  ;; Using `flet' would have been much simpler, but it's deprecated since 24.3.
+  (setq git-gutter:orig-find-status-buffer (symbol-function 'magit-find-status-buffer))
+  (fset 'magit-find-status-buffer git-gutter:find-status-buf-or-cur-buf)
+  (unwind-protect
+      ad-do-it
+    (fset 'magit-find-status-buffer git-gutter:orig-find-status-buffer)))
+
 (provide 'git-gutter)
 
 ;;; git-gutter.el ends here
