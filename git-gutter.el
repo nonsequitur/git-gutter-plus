@@ -185,23 +185,26 @@ character for signs of changes"
     (with-temp-buffer
       (when (zerop (git-gutter:call-git args file))
         (goto-char (point-min))
-        (loop while (re-search-forward regexp nil t)
-              for orig-line = (string-to-number (match-string 1))
-              for new-line  = (string-to-number (match-string 3))
-              for orig-changes = (git-gutter:changes-to-number (match-string 2))
-              for new-changes = (git-gutter:changes-to-number (match-string 4))
-              for type = (cond ((zerop orig-changes) 'added)
-                               ((zerop new-changes) 'deleted)
-                               (t 'modified))
-              for start-line = (if (eq type 'deleted)
-                                   (1+ new-line)
-                                 new-line)
-              for end-line = (if (eq type 'deleted)
-                                 start-line
-                               (1- (+ new-line new-changes)))
-              for content = (git-gutter:diff-content)
-              collect
-              (git-gutter:make-diffinfo type content start-line end-line))))))
+        (git-gutter:get-diffinfos regexp)))))
+
+(defun git-gutter:get-diffinfos (regexp)
+  (loop while (re-search-forward regexp nil t)
+        for orig-line = (string-to-number (match-string 1))
+        for new-line  = (string-to-number (match-string 3))
+        for orig-changes = (git-gutter:changes-to-number (match-string 2))
+        for new-changes = (git-gutter:changes-to-number (match-string 4))
+        for type = (cond ((zerop orig-changes) 'added)
+                         ((zerop new-changes) 'deleted)
+                         (t 'modified))
+        for start-line = (if (eq type 'deleted)
+                             (1+ new-line)
+                           new-line)
+        for end-line = (if (eq type 'deleted)
+                           start-line
+                         (1- (+ new-line new-changes)))
+        for content = (git-gutter:diff-content)
+        collect
+        (git-gutter:make-diffinfo type content start-line end-line)))
 
 (defun git-gutter:line-to-pos (line)
   (save-excursion
