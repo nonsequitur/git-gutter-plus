@@ -310,7 +310,7 @@ character for signs of changes"
                (git-gutter:in-git-repository-p (buffer-file-name)))
           (progn
             (git-gutter:add-local-hooks)
-            (git-gutter))
+            (git-gutter:refresh))
         (if (called-interactively-p 'any)
             (message "No Git repo for current buffer"))
         (git-gutter-mode -1))
@@ -318,9 +318,9 @@ character for signs of changes"
     (git-gutter:clear)))
 
 (defun git-gutter:add-local-hooks ()
-  (add-hook 'after-save-hook        'git-gutter nil t)
+  (add-hook 'after-save-hook        'git-gutter:refresh nil t)
   ;; Turn off `git-gutter-mode' while reverting to prevent any redundant calls to
-  ;; `git-gutter'.
+  ;; `git-gutter:refresh'.
   (add-hook 'before-revert-hook     'git-gutter:turn-off nil t)
   (add-hook 'change-major-mode-hook 'git-gutter:reenable-after-major-mode-change nil t)
   (if git-gutter:window-config-change-function
@@ -328,7 +328,7 @@ character for signs of changes"
                 git-gutter:window-config-change-function nil t)))
 
 (defun git-gutter:remove-local-hooks ()
-  (remove-hook 'after-save-hook        'git-gutter t)
+  (remove-hook 'after-save-hook        'git-gutter:refresh t)
   (remove-hook 'before-revert-hook     'git-gutter:turn-off t)
   (remove-hook 'change-major-mode-hook 'git-gutter:reenable-after-major-mode-change t)
   (if git-gutter:window-config-change-function
@@ -341,10 +341,10 @@ character for signs of changes"
        ,@body)))
 
 ;; When `define-globalized-minor-mode' is used to define `global-git-gutter-mode',
-;; `git-gutter-mode' and thus `git-gutter' get run twice when a new file is opened.
-;; (First for `fundamental-mode', then for the file-specific mode.)
-;; The following definition of `global-git-gutter-mode' avoids any redundant calls
-;; to `git-gutter'.
+;; `git-gutter-mode' and thus `git-gutter:refresh' get run twice when a new file
+;; is opened. (First for `fundamental-mode', then for the file-specific mode.)
+;; The following definition of `global-git-gutter-mode' avoids any redundant calls to
+;; `git-gutter:refresh'.
 
 ;;;###autoload
 (define-minor-mode global-git-gutter-mode ()
@@ -541,10 +541,7 @@ character for signs of changes"
     (let ((file (aref (tramp-dissect-file-name curfile) 3)))
       (replace-regexp-in-string (concat "\\`" dir) "" curfile))))
 
-;;;###autoload
-(defun git-gutter ()
-  "Show diff information in gutter"
-  (interactive)
+(defun git-gutter:refresh ()
   (git-gutter:clear)
   (let ((file (buffer-file-name)))
     (when (and file (file-exists-p file))
