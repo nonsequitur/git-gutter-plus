@@ -131,9 +131,6 @@ character for signs of changes"
   :type 'hook
   :group 'git-gutter)
 
-(defvar git-gutter:enabled nil)
-(defvar git-gutter:toggle-flag t)
-(defvar git-gutter:force nil)
 (defvar git-gutter:diffinfos nil)
 
 (defvar git-gutter:popup-buffer "*git-gutter:diff*")
@@ -311,8 +308,6 @@ character for signs of changes"
       (if (and (git-gutter:file-buffer-p)
                (git-gutter:in-git-repository-p (buffer-file-name)))
           (progn
-            (make-local-variable 'git-gutter:enabled)
-            (set (make-local-variable 'git-gutter:toggle-flag) t)
             (make-local-variable 'git-gutter:diffinfos)
             (git-gutter:add-local-hooks)
             (git-gutter))
@@ -408,8 +403,7 @@ character for signs of changes"
   (git-gutter:show-gutter diffinfos))
 
 (defsubst git-gutter:reset-window-margin-p ()
-  (or git-gutter:force
-      git-gutter:hide-gutter
+  (or git-gutter:hide-gutter
       (not global-git-gutter-mode)))
 
 (defun git-gutter:clear-diff-infos ()
@@ -552,14 +546,12 @@ character for signs of changes"
   "Show diff information in gutter"
   (interactive)
   (git-gutter:clear)
-  (when (or git-gutter:force git-gutter:toggle-flag)
-    (let ((file (buffer-file-name)))
-      (when (and file (file-exists-p file))
-        (git-gutter:awhen (git-gutter:root-directory file)
-          (let* ((default-directory (git-gutter:default-directory it file))
-                 (curfile (git-gutter:relative-path default-directory file)))
-            (git-gutter:process-diff curfile)
-            (setq git-gutter:enabled t)))))))
+  (let ((file (buffer-file-name)))
+    (when (and file (file-exists-p file))
+      (git-gutter:awhen (git-gutter:root-directory file)
+        (let* ((default-directory (git-gutter:default-directory it file))
+               (curfile (git-gutter:relative-path default-directory file)))
+          (git-gutter:process-diff curfile))))))
 
 ;;;###autoload
 (defun git-gutter:clear ()
@@ -568,22 +560,7 @@ character for signs of changes"
   (save-restriction
     (widen)
     (funcall git-gutter:clear-function))
-  (setq git-gutter:enabled nil
-        git-gutter:diffinfos nil))
-
-;;;###autoload
-(defun git-gutter:toggle ()
-  "toggle to show diff information"
-  (interactive)
-  (let ((git-gutter:force t))
-    (if git-gutter:enabled
-        (progn
-          (git-gutter:clear)
-          (setq git-gutter-mode nil))
-      (git-gutter)
-      (setq git-gutter-mode t))
-    (setq git-gutter:toggle-flag git-gutter:enabled)
-    (force-mode-line-update)))
+  (setq git-gutter:diffinfos nil))
 
 (provide 'git-gutter)
 
