@@ -188,7 +188,7 @@ character for signs of changes"
       (forward-line 1)
       (if (re-search-forward "^@@" nil t)
           (backward-char 3) ;; for '@@'
-        (goto-char (point-max)))
+        (goto-char (1- (point-max)))) ; Skip trailing newline
       (buffer-substring curpoint (point)))))
 
 (defsubst git-gutter:diff-command (file)
