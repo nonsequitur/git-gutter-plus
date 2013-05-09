@@ -520,11 +520,7 @@ character for signs of changes"
 (defun git-gutter:previous-hunk (arg)
   "Move to previous diff hunk"
   (interactive "p")
-  (git-gutter:next-diff (- arg)))
-
-(defalias 'git-gutter:next-diff 'git-gutter:next-hunk)
-(defalias 'git-gutter:previous-diff 'git-gutter:previous-hunk)
-(defalias 'git-gutter:popup-diff 'git-gutter:popup-hunk)
+  (git-gutter:next-hunk (- arg)))
 
 (defun git-gutter:default-directory (dir curfile)
   (if (not (file-remote-p curfile))
