@@ -1,126 +1,145 @@
 # git-gutter.el
 
-## Introduction
-`git-gutter.el` is port of [GitGutter](https://github.com/jisaacks/GitGutter)
-which is a plugin of Sublime Text.
+View, stage and revert Git changes straight from the buffer.
 
+(`git-gutter.el` is inspired by the [GitGutter](https://github.com/jisaacks/GitGutter)
+plugin for Sublime Text.)
 
-`git-gutter.el` also supports TRAMP so you can use `git-gutter.el` for remote files.
+![git-gutter](images/git-gutter-main.png)
 
+## Changes since [Git-Gutter](https://github.com/syohex/emacs-git-gutter) 0.42
 
-## Screenshot
+This package contains patches that haven't yet been added to [Git-Gutter](https://github.com/syohex/emacs-git-gutter).
+- Improved performance
+- Staging and committing hunks
+- A bug-free `git-gutter-fringe.el` and other fixes
+- The following interactive commands have been removed.
+  They are superseded by `git-gutter-mode`.
+  - git-gutter
+  - git-gutter:toggle
+  - git-gutter:clear
+- Removed mode-on/off-hook variables
+- Renamed `git-gutter:diff-option` to `git-gutter:diff-options`
 
-![git-gutter.el](image/git-gutter1.png)
+## Get Started
 
+* Install with package.el
+
+  Add [Marmalade](http://marmalade-repo.org) as a package source.
+  Run `M-x package-install git-gutter`
+
+* Add the following to your .emacs file
+
+        (global-git-gutter-mode t)
+
+  If you want to disable git-gutter for some modes, set the variable
+  `git-gutter:disabled-modes`.
+
+  As an alternative to `global-git-gutter-mode` you can enable git-gutter only for
+  specific modes, like this:
+
+        (add-hook 'ruby-mode-hook 'git-gutter-mode)
+        (add-hook 'python-mode-hook 'git-gutter-mode)
+
+* Add keybindings
+
+        ;;; Jump between hunks
+        (global-set-key (kbd "C-x n") 'git-gutter:next-hunk)
+        (global-set-key (kbd "C-x p") 'git-gutter:previous-hunk)
+
+        ;;; Act on hunks
+        (global-set-key (kbd "C-x v =") 'git-gutter:popup-hunk) ; Show detailed diff
+        (global-set-key (kbd "C-x r") 'git-gutter:revert-hunk)
+        ;; Stage hunk at point.
+        ;; If region is active, stage all hunk lines within the region.
+        (global-set-key (kbd "C-x t") 'git-gutter:stage-hunks)
+        (global-set-key (kbd "C-x c") 'git-gutter:commit) ; Commit with Magit
+        (global-set-key (kbd "C-x C") 'git-gutter:stage-and-commit)
+
+        (global-set-key (kbd "C-x g") 'git-gutter-mode) ; Turn on/off in the current buffer
+        (global-set-key (kbd "C-x G") 'global-git-gutter-mode) ; Turn on/off globally
+
+## [git-gutter-fringe.el](https://github.com/nonsequitur/git-gutter-fringe-plus)
+
+![git-gutter-fringe-minimal](https://raw.github.com/nonsequitur/git-gutter-fringe-plus/master/images/git-gutter-fringe-minimal.png)
+
+*(git-gutter-fringe with minimal skin)*
+
+[git-gutter-fringe.el](https://github.com/nonsequitur/git-gutter-fringe-plus) uses
+the fringe to display diff markers, instead of the buffer margin.
+
+These are the differences to the default margin display mode in git-gutter:
+
+|                          | git-gutter.el | git-gutter-fringe.el |
+|:-------------------------|:-------------:|:--------------------:|
+| Works in tty frame       | +             | -                    |
+| Works with linum-mode    | -             | +                    |
+| Gutter on the right side | -             | +                    |
+
+Enable git-gutter-fringe like this:
+
+    M-x package-install git-gutter-fringe
+    (require git-gutter-fringe)
+
+    ;; Optional: Activate minimal skin
+    (git-gutter-fr:minimal)
+
+## Commands
+
+#### `git-gutter-mode`
+Enable/disable git-gutter in the current buffer.
+
+#### `global-git-gutter-mode`
+Globally enable/disable git-gutter for all file buffers.
+
+#### `git-gutter:next-hunk`
+
+Jump to the next hunk.
+
+#### `git-gutter:previous-hunk`
+
+Jump to the previous hunk.
+
+#### `git-gutter:popup-hunk`
+
+Show detailed diff for the hunk at point.
+
+The hunk info is updated when you call
+`git-gutter:next-hunk` and `git-gutter:previous-hunk`.
+
+#### `git-gutter:revert-hunk`
+
+Revert hunk at point.
+
+#### `git-gutter:stage-hunks`
+
+Stage hunk at point. If region is active, stage all hunk
+lines within the region.
+
+#### `git-gutter:commit`
+
+Commit staged changes with Magit.
+
+#### `git-gutter:stage-and-commit`
+
+Calls `git-gutter:stage-hunks` followed by `git-gutter:commit`.
 
 ## Requirements
 
 * Emacs 23 or higher
+* Magit, if you use the committing features.
 * [Git](http://git-scm.com/) 1.7.0 or higher
 
+## Tramp
+Git-Gutter supports TRAMP for remote file support.
 
-## git-gutter.el vs [git-gutter-fringe.el](https://github.com/syohex/emacs-git-gutter-fringe)
-
-|                      | git-gutter.el | git-gutter-fringe.el |
-|:---------------------|:-------------:|:--------------------:|
-| Work in tty frame    | OK            | NG                   |
-| Work with linum-mode | NG            | OK                   |
-| Show on right side   | NG            | OK                   |
-| More configurable    | OK            | NG                   |
-
-
-## Installation
-
-You can install `git-gutter.el` from [MELPA](https://github.com/milkypostman/melpa.git) with package.el
-(`M-x package-install git-gutter`).
-
-And you can also install it with [el-get](https://github.com/dimitri/el-get).
-
-
-## Global Minor Mode and Minor Mode
-
-`git-gutter.el` provides global minor-mode(`global-git-gutter-mode`) and minor-mode(`git-gutter-mode`).
-
-If you want to use `git-gutter` for files in git repository.
-You add following s-exp in your configuration file(`~/.emacs.d/init.el` or `~/.emacs`).
-
-```elisp
-(global-git-gutter-mode t)
-```
-
-Other case, you want to use `git-gutter` for some files, you can use `git-gutter-mode`.
-Following example of enabling `git-gutter` for some mode.
-
-```elisp
-(add-hook 'ruby-mode-hook 'git-gutter-mode)
-(add-hook 'python-mode-hook 'git-gutter-mode)
-```
-
-
-## Commands
-
-`git-gutter.el` provides following commands.
-
-#### `git-gutter:next-hunk`
-
-Jump to next hunk(alias `git-gutter:next-diff`)
-
-#### `git-gutter:previous-hunk`
-
-Jump to previous hunk(alias `git-gutter:previous-diff`)
-
-#### `git-gutter:popup-hunk`
-
-Popup current diff hunk(alias `git-gutter:popup-diff`)
-
-`git-gutter:next-hunk` and `git-gutter:previous-hunk` update content
-of buffer popuped by `git-gutter:popup-diff` to current hunk.
-
-#### `git-gutter:revert-hunk`
-
-Revert current hunk
-
-#### `git-gutter`
-
-Show changes from last commit or Update change information.
-
-#### `git-gutter:clear`
-
-Clear changes
-
-#### `git-gutter:toggle`
-
-Toggle git-gutter
-
-
-## Sample Configuration
-
-```elisp
-(require 'git-gutter)
-
-;; If you enable global minor mode
-(global-git-gutter-mode t)
-
-;; If you enable git-gutter-mode for some modes
-(add-hook 'ruby-mode-hook 'git-gutter-mode)
-
-(global-set-key (kbd "C-x C-g") 'git-gutter:toggle)
-(global-set-key (kbd "C-x v =") 'git-gutter:popup-hunk)
-
-;; Jump to next/previous hunk
-(global-set-key (kbd "C-x p") 'git-gutter:previous-hunk)
-(global-set-key (kbd "C-x n") 'git-gutter:next-hunk)
-
-;; Revert current hunk
-(global-set-key (kbd "C-x r") 'git-gutter:revert-hunk)
-```
-
+# This section of the manual hasn't yet been cleaned up.
 
 ## Customize
 
 ### Look and feel
 
-![git-gutter-multichar](image/git-gutter-multichar.png)
+![git-gutter-multichar](images/git-gutter-multichar.png)
 
 You can change the signs and those faces.
 
@@ -145,7 +164,7 @@ Default is " GitGutter"
 
 ### Using full width characters
 
-![git-gutter-fullwidth](image/git-gutter-fullwidth.png)
+![git-gutter-fullwidth](images/git-gutter-fullwidth.png)
 
 Emacs has `char-width` function which returns character width.
 `git-gutter.el` uses it for calculating character length of the signs.
@@ -175,7 +194,7 @@ Default is `nil`.
 
 ### Show Unchanged Information
 
-![git-gutter-unchanged](image/git-gutter-unchanged.png)
+![git-gutter-unchanged](images/git-gutter-unchanged.png)
 
 `git-gutter.el` can view unchanged information by setting `git-gutter:unchanged-sign`.
 Like following.
@@ -189,7 +208,7 @@ Default value of `git-gutter:unchanged-sign` is `nil`.
 
 ### Show a separator column
 
-![git-gutter-separator](image/git-gutter-separator.png)
+![git-gutter-separator](images/git-gutter-separator.png)
 
 `git-gutter.el` can display an additional separator character at the right of the changed
 signs. This is mostly useful when running emacs in a console.
@@ -210,13 +229,14 @@ Hide gutter when there are no changes if `git-gutter:hide-gutter` is non-nil.
 (setq git-gutter:hide-gutter t)
 ```
 
-### Pass option to 'git diff' command
+### Extra arguments for 'git diff'
 
-You can pass `git diff` option to set `git-gutter:diff-option`.
+You can force extra arguments to be passed to `git diff` by setting
+`git-gutter:diff-options`.
 
 ```elisp
-;; ignore all spaces
-(setq git-gutter:diff-option "-w")
+;; Ignore all spaces
+(setq git-gutter:diff-options '("-w"))
 ```
 
 ## See Also
@@ -232,7 +252,3 @@ GitGutter is Sublime Text plugin.
 ### [vim-gitgutter](https://github.com/airblade/vim-gitgutter)
 
 Vim version of GitGutter
-
-### Another implementation of git-gutter.el
-
-[How to write another implementation](wiki/Write-another-git-gutter.el-implementation)
