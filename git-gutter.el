@@ -132,6 +132,7 @@ character for signs of changes"
   :group 'git-gutter)
 
 (defvar git-gutter:diffinfos nil)
+(make-variable-buffer-local 'git-gutter:diffinfos)
 
 (defvar git-gutter:popup-buffer "*git-gutter:diff*")
 (defvar git-gutter:buffers-to-reenable nil)
@@ -308,7 +309,6 @@ character for signs of changes"
       (if (and (git-gutter:file-buffer-p)
                (git-gutter:in-git-repository-p (buffer-file-name)))
           (progn
-            (make-local-variable 'git-gutter:diffinfos)
             (git-gutter:add-local-hooks)
             (git-gutter))
         (if (called-interactively-p 'any)
