@@ -129,6 +129,10 @@ character for signs of changes"
 (defvar git-gutter:popup-buffer "*git-gutter:diff*")
 (defvar git-gutter:buffers-to-reenable nil)
 
+(defconst git-gutter:hunk-header-regex
+  ;; The same as diff-hunk-header-re-unified
+  "^@@ -\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? \\+\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? @@")
+
 (defmacro git-gutter:awhen (test &rest body)
   "Anaphoric when."
   (declare (indent 1))
@@ -555,6 +559,144 @@ character for signs of changes"
     (widen)
     (funcall git-gutter:clear-function))
   (setq git-gutter:diffinfos nil))
+
+
+;;; Staging
+
+;;;###autoload
+(defun git-gutter:stage-hunks ()
+  (interactive)
+  (let* ((line-range (if (use-region-p)
+                         (cons (line-number-at-pos (region-beginning))
+                               (line-number-at-pos (region-end)))))
+         (diffinfos (git-gutter:diffinfos-to-stage line-range)))
+    (when diffinfos
+      (let ((error-msg (git-gutter:stage-diffinfos diffinfos line-range)))
+        (if error-msg
+            (message "Error staging hunks:\n%s" error-msg))
+        (git-gutter:refresh)))))
+
+(defun git-gutter:diffinfos-to-stage (line-range)
+  (if line-range
+      (git-gutter:diffinfos-between-lines line-range)
+    (git-gutter:awhen (git-gutter:search-here-diffinfo git-gutter:diffinfos)
+      (list it))))
+
+(defsubst git-gutter:diffinfo-between-lines-p (diffinfo start-line end-line)
+  (let ((diff-start (plist-get diffinfo :start-line))
+        (diff-end   (plist-get diffinfo :end-line)))
+    (and (<= start-line diff-end)
+         (<= diff-start end-line))))
+
+(defun git-gutter:diffinfos-between-lines (line-range)
+  (let ((start-line (car line-range))
+        (end-line   (cdr line-range)))
+    (delq nil
+          (mapcar (lambda (diffinfo)
+                    (if (git-gutter:diffinfo-between-lines-p
+                         diffinfo start-line end-line)
+                        diffinfo))
+                  git-gutter:diffinfos))))
+
+(defun git-gutter:stage-diffinfos (diffinfos line-range)
+  (let ((header git-gutter:diff-header))
+    (with-temp-buffer
+      (insert header)
+      ;; Insert hunks in reverse so that earlier hunks don't invalidate the line
+      ;; number information of the later hunks.
+      (dolist (diffinfo (nreverse diffinfos))
+        (git-gutter:insert-diffinfo diffinfo line-range)
+        (goto-char (point-max)))
+      (git-gutter:call-on-current-buffer
+       "git" "apply" "--unidiff-zero" "--cached" "-"))))
+
+(defun git-gutter:insert-diffinfo (diffinfo line-range)
+  (let ((content (plist-get diffinfo :content))
+        (type    (plist-get diffinfo :type)))
+    (if (not line-range)
+        (git-gutter:insert-hunk content type)
+      (let ((diff-start-line (plist-get diffinfo :start-line))
+            (diff-end-line   (plist-get diffinfo :end-line))
+            (start-line (car line-range))
+            (end-line   (cdr line-range)))
+        (git-gutter:insert-hunk content type
+                                (1+ (- start-line diff-start-line))
+                                (1+ (- end-line diff-start-line)))))))
+
+(defun git-gutter:call-on-current-buffer (program &rest args)
+  "Returns nil if PROGRAM ran successfully. Returns an error description otherwise."
+  (unless (zerop (apply #'call-process-region (point-min) (point-max)
+                        program t t nil args))
+    (buffer-string)))
+
+(defsubst git-gutter:read-hunk-header (hunk)
+  ;; @@ -{del-line},{del-len} +{add-line},{add-len} @@
+  (string-match git-gutter:hunk-header-regex hunk)
+  (list (string-to-number (match-string 1 hunk))
+        (string-to-number (or (match-string 2 hunk) "1"))
+        (string-to-number (match-string 3 hunk))
+        (string-to-number (or (match-string 4 hunk) "1"))))
+
+(defun git-gutter:insert-hunk (hunk type &optional start end)
+  "If START and END are provided, only insert addition (+) lines between
+START and END (inclusive). START and END are both line numbers starting with 1."
+  (destructuring-bind
+      (del-line del-len add-line add-len) (git-gutter:read-hunk-header hunk)
+    (let* ((start (max 1 (or start 1)))
+           (end   (min add-len (or end add-len)))
+           (insert-all-p (or (eq type :deleted)
+                             (and (eq start 1) (eq end add-len))))
+           (num-lines-selected (if insert-all-p
+                                   add-len
+                                 (1+ (- end start)))))
+      ;; When the user selected the last lines of a hunk with type `modified' (but
+      ;; not the complete hunk), then don't insert any deletion (-) lines from that
+      ;; hunk.
+      (if (and (eq type 'modified)
+               (< 1 start) (= end add-len))
+          (setq type 'modified-trailing))
+
+      (save-excursion
+        (insert hunk "\n"))
+
+      (git-gutter:delete-hunk-header)
+
+      (if (not insert-all-p)
+          (git-gutter:modify-hunk type num-lines-selected del-len start end))
+
+      (let ((hunk-header (git-gutter:make-hunk-header type num-lines-selected
+                                                      del-line del-len add-line)))
+        (insert hunk-header "\n")))))
+
+(defun git-gutter:delete-hunk-header ()
+  (let ((hunk-start (point)))
+    (forward-line 1)
+    (delete-region hunk-start (point))))
+
+(defun git-gutter:modify-hunk (type num-lines-selected del-len start end)
+  (let ((first-line-selected (+ del-len (1- start)))
+        selected-lines)
+    (save-excursion
+      (forward-line first-line-selected)
+      (let ((start-point (point)))
+        (forward-line num-lines-selected)
+        (setq selected-lines (buffer-substring start-point (point)))))
+    (save-excursion
+      (if (eq type 'modified) (forward-line del-len)) ; skip over deletion (-) lines
+      (delete-region (point) (point-max))
+      (insert selected-lines))))
+
+(defun git-gutter:make-hunk-header (type num-lines-selected del-line del-len add-line)
+  (let  ((add-len num-lines-selected))
+    (case type
+      (added (setq add-line (1+ del-line)))
+      (modified-trailing (setq add-line (+ del-line del-len)
+                               del-line (1- add-line)
+                               del-len 0))
+      (t (setq add-line del-line)))
+    (format "@@ -%d,%d +%d,%d @@"
+            del-line del-len
+            add-line add-len)))
 
 (provide 'git-gutter)
 
