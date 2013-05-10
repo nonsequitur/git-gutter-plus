@@ -158,24 +158,6 @@ character for signs of changes"
           (unless (string= root "")
             (file-name-as-directory root)))))))
 
-(defsubst git-gutter:changes-to-number (str)
-  (if (string= str "")
-      1
-    (string-to-number str)))
-
-(defsubst git-gutter:make-diffinfo (type content start end)
-  (list :type type :content content :start-line start :end-line end))
-
-(defun git-gutter:diff-content ()
-  (save-excursion
-    (goto-char (line-beginning-position))
-    (let ((curpoint (point)))
-      (forward-line 1)
-      (if (re-search-forward "^@@" nil t)
-          (backward-char 3) ;; for '@@'
-        (goto-char (1- (point-max)))) ; Skip trailing newline
-      (buffer-substring curpoint (point)))))
-
 (defsubst git-gutter:diff-args (file)
   (delq nil (list "--no-pager" "diff" "--no-color" "--no-ext-diff" "-U0"
                   git-gutter:diff-options file)))
@@ -196,6 +178,14 @@ character for signs of changes"
     (if (re-search-forward regexp nil t)
         (buffer-substring (point-min) (match-beginning 0)))))
 
+(defsubst git-gutter:changes-to-number (str)
+  (if (string= str "")
+      1
+    (string-to-number str)))
+
+(defsubst git-gutter:make-diffinfo (type content start end)
+  (list :type type :content content :start-line start :end-line end))
+
 (defun git-gutter:get-diffinfos (regexp)
   (loop while (re-search-forward regexp nil t)
         for orig-line = (string-to-number (match-string 1))
@@ -214,6 +204,16 @@ character for signs of changes"
         for content = (git-gutter:diff-content)
         collect
         (git-gutter:make-diffinfo type content start-line end-line)))
+
+(defun git-gutter:diff-content ()
+  (save-excursion
+    (goto-char (line-beginning-position))
+    (let ((curpoint (point)))
+      (forward-line 1)
+      (if (re-search-forward "^@@" nil t)
+          (backward-char 3) ;; for '@@'
+        (goto-char (1- (point-max)))) ; Skip trailing newline
+      (buffer-substring curpoint (point)))))
 
 (defun git-gutter:line-to-pos (line)
   (save-excursion
