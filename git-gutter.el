@@ -301,9 +301,9 @@ character for signs of changes"
     (set-window-margins curwin width (cdr (window-margins curwin)))))
 
 (defsubst git-gutter:check-file-and-directory ()
-  ;; global-git-gutter-mode already check `buffer-file-name' returns t.
-  (and (or global-git-gutter-mode (buffer-file-name))
-       default-directory (file-directory-p default-directory)))
+  (and (buffer-file-name)
+       default-directory
+       (file-directory-p default-directory)))
 
 ;;;###autoload
 (define-minor-mode git-gutter-mode
