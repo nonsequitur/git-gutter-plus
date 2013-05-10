@@ -300,7 +300,7 @@ character for signs of changes"
   (let ((curwin (get-buffer-window)))
     (set-window-margins curwin width (cdr (window-margins curwin)))))
 
-(defsubst git-gutter:check-file-and-directory ()
+(defsubst git-gutter:file-buffer-p ()
   (and (buffer-file-name)
        default-directory
        (file-directory-p default-directory)))
@@ -313,7 +313,7 @@ character for signs of changes"
   :global     nil
   :lighter    git-gutter:lighter
   (if git-gutter-mode
-      (if (and (git-gutter:check-file-and-directory)
+      (if (and (git-gutter:file-buffer-p)
                (git-gutter:in-git-repository-p (buffer-file-name)))
           (progn
             (make-local-variable 'git-gutter:enabled)
