@@ -122,7 +122,9 @@ character for signs of changes"
   "Function to call when the buffer's local window configuration has changed")
 
 (defvar git-gutter:diffinfos nil)
+(defvar git-gutter:diff-header nil)
 (make-variable-buffer-local 'git-gutter:diffinfos)
+(make-variable-buffer-local 'git-gutter:diff-header)
 
 (defvar git-gutter:popup-buffer "*git-gutter:diff*")
 (defvar git-gutter:buffers-to-reenable nil)
@@ -185,7 +187,14 @@ character for signs of changes"
     (with-temp-buffer
       (when (zerop (git-gutter:call-git args file))
         (goto-char (point-min))
-        (git-gutter:get-diffinfos regexp)))))
+        (let ((diff-header (git-gutter:get-diff-header regexp))
+              (diffinfos   (git-gutter:get-diffinfos regexp)))
+          (list diff-header diffinfos))))))
+
+(defun git-gutter:get-diff-header (regexp)
+  (save-excursion
+    (if (re-search-forward regexp nil t)
+        (buffer-substring (point-min) (match-beginning 0)))))
 
 (defun git-gutter:get-diffinfos (regexp)
   (loop while (re-search-forward regexp nil t)
@@ -405,8 +414,10 @@ character for signs of changes"
   (remove-overlays (point-min) (point-max) 'git-gutter t))
 
 (defun git-gutter:process-diff (curfile)
-  (let ((diffinfos (git-gutter:diff curfile)))
-    (setq git-gutter:diffinfos diffinfos)
+  (destructuring-bind
+      (diff-header diffinfos) (git-gutter:diff curfile)
+    (setq git-gutter:diff-header diff-header
+          git-gutter:diffinfos   diffinfos)
     (save-restriction
       (widen)
       (funcall git-gutter:view-diff-function diffinfos))))
