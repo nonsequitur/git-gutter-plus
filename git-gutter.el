@@ -761,6 +761,27 @@ START and END (inclusive). START and END are both line numbers starting with 1."
       ad-do-it
     (fset 'magit-find-status-buffer git-gutter:orig-find-status-buffer)))
 
+
+;;; Magit synchronization
+;; Force Magit to refresh git-gutter when updating the VC mode line.
+;; Use the same strategy as for `magit-log-edit-commit'.
+
+(defvar git-gutter:orig-vc-find-file-hook)
+
+(defvar git-gutter:vc-find-file-hook-with-refresh
+  (lambda ()
+    (funcall git-gutter:orig-vc-find-file-hook)
+    (if git-gutter-mode (git-gutter:refresh))))
+
+(defadvice magit-update-vc-modeline (around refresh-git-gutter compile activate)
+  ;; `magit-update-vc-modeline' calls `vc-find-file-hook' (a function!) on each
+  ;; buffer in the repo. Temporarily rebind it to `vc-find-file-hook-with-refresh'.
+  (setq git-gutter:orig-vc-find-file-hook (symbol-function 'vc-find-file-hook))
+  (fset 'vc-find-file-hook git-gutter:vc-find-file-hook-with-refresh)
+  (unwind-protect
+      ad-do-it
+    (fset 'vc-find-file-hook git-gutter:orig-vc-find-file-hook)))
+
 (provide 'git-gutter)
 
 ;;; git-gutter.el ends here
