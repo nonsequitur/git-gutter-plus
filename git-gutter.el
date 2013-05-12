@@ -210,12 +210,15 @@ character for signs of changes"
               for type = (cond ((zerop orig-changes) 'added)
                                ((zerop new-changes) 'deleted)
                                (t 'modified))
+              for start-line = (if (eq type 'deleted)
+                                   (1+ new-line)
+                                 new-line)
               for end-line = (if (eq type 'deleted)
-                                 new-line
+                                 start-line
                                (1- (+ new-line new-changes)))
               for content = (git-gutter:diff-content)
               collect
-              (git-gutter:make-diffinfo type content new-line end-line))))))
+              (git-gutter:make-diffinfo type content start-line end-line))))))
 
 (defun git-gutter:line-to-pos (line)
   (save-excursion
@@ -471,7 +474,7 @@ character for signs of changes"
           (content (plist-get diffinfo :content)))
       (case (plist-get diffinfo :type)
         (added (git-gutter:delete-added-lines start-line end-line))
-        (deleted (forward-line start-line)
+        (deleted (forward-line (1- start-line))
                  (git-gutter:insert-deleted-lines content))
         (modified (git-gutter:delete-added-lines start-line end-line)
                   (git-gutter:insert-deleted-lines content))))))
