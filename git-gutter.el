@@ -121,16 +121,6 @@ character for signs of changes"
 (defvar git-gutter:window-config-change-function 'git-gutter:show-gutter
   "Function to call when the buffer's local window configuration has changed")
 
-(defcustom git-gutter-mode-on-hook nil
-  "Hook run when git-gutter mode enable"
-  :type 'hook
-  :group 'git-gutter)
-
-(defcustom git-gutter-mode-off-hook nil
-  "Hook run when git-gutter mode disable"
-  :type 'hook
-  :group 'git-gutter)
-
 (defvar git-gutter:diffinfos nil)
 (make-variable-buffer-local 'git-gutter:diffinfos)
 

@@ -219,12 +219,6 @@ You can pass `git diff` option to set `git-gutter:diff-option`.
 (setq git-gutter:diff-option "-w")
 ```
 
-### Run hook
-
-Run hook `git-gutter-mode-on-hook` when `git-gutter-mode` is turn on, and
-run hook `git-gutter-mode-off-hook` when `git-gutter-mode` is turn off.
-
-
 ## See Also
 
 ### [GitGutter](https://github.com/jisaacks/GitGutter)
