@@ -553,10 +553,7 @@ character for signs of changes"
                (curfile (git-gutter:relative-path default-directory file)))
           (git-gutter:process-diff curfile))))))
 
-;;;###autoload
 (defun git-gutter:clear ()
-  "clear diff information in gutter"
-  (interactive)
   (save-restriction
     (widen)
     (funcall git-gutter:clear-function))
