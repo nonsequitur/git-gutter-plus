@@ -386,6 +386,11 @@ character for signs of changes"
     (when (git-gutter:show-gutter-p diffinfos)
       (git-gutter:set-window-margin win-width))))
 
+(defsubst git-gutter:reset-window-margin-p ()
+  (or git-gutter:force
+      git-gutter:hide-gutter
+      (not global-git-gutter-mode)))
+
 (defun git-gutter:clear-diff-infos ()
   (when (git-gutter:reset-window-margin-p)
     (git-gutter:set-window-margin 0))
@@ -535,11 +540,6 @@ character for signs of changes"
                  (curfile (git-gutter:relative-path default-directory file)))
             (git-gutter:process-diff curfile)
             (setq git-gutter:enabled t)))))))
-
-(defsubst git-gutter:reset-window-margin-p ()
-  (or git-gutter:force
-      git-gutter:hide-gutter
-      (not global-git-gutter-mode)))
 
 ;;;###autoload
 (defun git-gutter:clear ()
