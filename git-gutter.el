@@ -168,43 +168,37 @@ character for signs of changes"
 
 (defun git-gutter:diff (curfile)
   (let ((args (git-gutter:diff-args curfile))
-        (regexp "^@@ -\\([0-9]+\\),?\\([0-9]*\\) \\+\\([0-9]+\\),?\\([0-9]*\\) @@")
         (file (buffer-file-name))) ;; for tramp
     (with-temp-buffer
       (when (zerop (git-gutter:call-git args file))
         (goto-char (point-min))
-        (let ((diff-header (git-gutter:get-diff-header regexp))
-              (diffinfos   (git-gutter:get-diffinfos regexp)))
+        (let ((diff-header (git-gutter:get-diff-header))
+              (diffinfos   (git-gutter:get-diffinfos)))
           (list diff-header diffinfos))))))
 
-(defun git-gutter:get-diff-header (regexp)
+(defun git-gutter:get-diff-header ()
   (save-excursion
-    (if (re-search-forward regexp nil t)
+    (if (re-search-forward git-gutter:hunk-header-regex nil t)
         (buffer-substring (point-min) (match-beginning 0)))))
-
-(defsubst git-gutter:changes-to-number (str)
-  (if (string= str "")
-      1
-    (string-to-number str)))
 
 (defsubst git-gutter:make-diffinfo (type content start end)
   (list :type type :content content :start-line start :end-line end))
 
-(defun git-gutter:get-diffinfos (regexp)
-  (loop while (re-search-forward regexp nil t)
-        for orig-line = (string-to-number (match-string 1))
-        for new-line  = (string-to-number (match-string 3))
-        for orig-changes = (git-gutter:changes-to-number (match-string 2))
-        for new-changes = (git-gutter:changes-to-number (match-string 4))
-        for type = (cond ((zerop orig-changes) 'added)
-                         ((zerop new-changes) 'deleted)
+(defun git-gutter:get-diffinfos ()
+  (loop while (re-search-forward git-gutter:hunk-header-regex nil t)
+        ;; @@ -{del-line},{del-len} +{add-line},{add-len} @@
+        for del-len  = (string-to-number (or (match-string 2) "1"))
+        for add-line = (string-to-number (match-string 3))
+        for add-len  = (string-to-number (or (match-string 4) "1"))
+        for type = (cond ((zerop del-len) 'added)
+                         ((zerop add-len) 'deleted)
                          (t 'modified))
         for start-line = (if (eq type 'deleted)
-                             (1+ new-line)
-                           new-line)
+                             (1+ add-line)
+                           add-line)
         for end-line = (if (eq type 'deleted)
                            start-line
-                         (1- (+ new-line new-changes)))
+                         (1- (+ add-line add-len)))
         for content = (git-gutter:diff-content)
         collect
         (git-gutter:make-diffinfo type content start-line end-line)))
