@@ -1,8 +1,8 @@
 ;;; git-gutter.el --- Manage Git hunks straight from the buffer
 
-;; Copyright (C) 2013 by Syohei YOSHIDA
+;; Copyright (C) 2013 by Syohei YOSHIDA and contributors
 
-;; Author: Syohei YOSHIDA <syohex@gmail.com>
+;; Author: Syohei YOSHIDA <syohex@gmail.com> and contributors
 ;; URL: https://github.com/syohex/emacs-git-gutter
 ;; Version: 0.42
 
