@@ -27,9 +27,6 @@
 (require 'ert)
 (require 'git-gutter)
 
-;; suppress log message
-(setq git-gutter:verbosity 0)
-
 (ert-deftest git-gutter:root-directory ()
   "helper function `git-gutter:root-directory'"
   (let ((file (concat default-directory "test-git-gutter.el")))
@@ -72,11 +69,6 @@
   "helper function `git-gutter:propertized-sign'"
   (should (string= (git-gutter:propertized-sign 'added) "+")))
 
-(ert-deftest git-gutter:changes-to-number ()
-  "helper function `git-gutter:changes-to-number'"
-  (should (= (git-gutter:changes-to-number "") 1))
-  (should (= (git-gutter:changes-to-number "123") 123)))
-
 (ert-deftest git-gutter:make-diffinfo ()
   "helper function `git-gutter:make-diffinfo'"
   (let ((diffinfo1 (git-gutter:make-diffinfo 'added "diff1" 10 20))
@@ -103,14 +95,6 @@
 
     (let ((default-directory (file-name-directory (locate-library "git-gutter"))))
       (should (git-gutter:in-git-repository-p file)))))
-
-(ert-deftest git-gutter ()
-  "Should return nil if buffer does not related with file or file is not existed"
-  (with-current-buffer (get-buffer-create "*not-related-file*")
-    (should (null (git-gutter))))
-  (let ((buf (find-file-noselect "not-found")))
-    (with-current-buffer buf
-      (should (null (git-gutter))))))
 
 (ert-deftest git-gutter:collect-deleted-line ()
   "Should return lines which start with '-'"
@@ -143,25 +127,11 @@ bar
                 (git-gutter:diff-content))))
     (should (string= got "@@-1,1+1,1@@\nfoo\nbar"))))
 
-(ert-deftest git-gutter:diff-command ()
-  "Should return git diff command"
-  (let ((git-gutter:diff-option "--binary"))
-    (let ((got (git-gutter:diff-command "emacs/git.el"))
-          (expected "git --no-pager diff --no-color --no-ext-diff -U0 --binary \"emacs/git.el\""))
-      (should (string= got expected)))))
-
 (ert-deftest git-gutter:set-window-margin ()
   "Should change window margin"
   (git-gutter:set-window-margin 4)
   (let ((got (car (window-margins))))
     (should (= got 4))))
-
-(ert-deftest git-gutter:file-path ()
-  "Should return file path which is passed to 'git diff'"
-  (let* ((file (concat default-directory "test-git-gutter.el"))
-         (expected file)
-         (got (git-gutter:file-path default-directory file)))
-    (should (string= got expected))))
 
 (ert-deftest git-gutter-mode-success ()
   "Case git-gutter-mode enabled"
