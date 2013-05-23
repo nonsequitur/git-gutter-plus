@@ -680,7 +680,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
       (insert selected-lines))))
 
 (defun git-gutter:make-hunk-header (type num-lines-selected del-line del-len add-line)
-  (let  ((add-len num-lines-selected))
+  (let ((add-len num-lines-selected))
     (case type
       (added (setq add-line (1+ del-line)))
       (modified-trailing (setq add-line (+ del-line del-len)
