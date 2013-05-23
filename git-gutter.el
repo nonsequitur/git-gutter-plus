@@ -1,4 +1,4 @@
-;;; git-gutter.el --- Port of Sublime Text plugin GitGutter
+;;; git-gutter.el --- Manage Git hunks straight from the buffer
 
 ;; Copyright (C) 2013 by Syohei YOSHIDA
 
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 ;;
-;; Port of GitGutter which is a plugin of Sublime Text
+;; View, stage and revert Git changes straight from the buffer.
 
 ;;; Code:
 
@@ -36,9 +36,8 @@
   :group 'vc)
 
 (defcustom git-gutter:window-width nil
-  "Character width of gutter window. Emacs mistakes width of some characters.
-It is better to explicitly assign width to this variable, if you use full-width
-character for signs of changes"
+  "Character width of the gutter margin. Set this variable if the automatically
+calculated width looks wrong. (This can happen with some special characters.)"
   :type 'integer
   :group 'git-gutter)
 
@@ -84,39 +83,39 @@ character for signs of changes"
 
 (defface git-gutter:separator
     '((t (:foreground "cyan" :weight bold)))
-  "Face of separator"
+  "Face of the separator"
   :group 'git-gutter)
 
 (defface git-gutter:modified
     '((t (:foreground "magenta" :weight bold)))
-  "Face of modified"
+  "Face for modified lines"
   :group 'git-gutter)
 
 (defface git-gutter:added
     '((t (:foreground "green" :weight bold)))
-  "Face of added"
+  "Face for added lines"
   :group 'git-gutter)
 
 (defface git-gutter:deleted
     '((t (:foreground "red" :weight bold)))
-  "Face of deleted"
+  "Face for deleted lines"
   :group 'git-gutter)
 
 (defface git-gutter:unchanged
     '((t (:background "yellow")))
-  "Face of unchanged"
+  "Face for unchanged lines"
   :group 'git-gutter)
 
 (defcustom git-gutter:disabled-modes nil
-  "A list of modes which `global-git-gutter-mode' should be disabled."
+  "A list of modes for which `global-git-gutter-mode' should be disabled."
   :type '(repeat symbol)
   :group 'git-gutter)
 
 (defvar git-gutter:view-diff-function 'git-gutter:view-diff-infos
-  "Function of viewing changes")
+  "Display diffs")
 
 (defvar git-gutter:clear-function 'git-gutter:clear-diff-infos
-  "Function of clear changes")
+  "Clear diff display")
 
 (defvar git-gutter:window-config-change-function 'git-gutter:show-gutter
   "Function to call when the buffer's local window configuration has changed")
