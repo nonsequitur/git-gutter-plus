@@ -25,7 +25,7 @@ This package contains patches that haven't yet been added to [Git-Gutter](https:
 
 * Install with package.el
 
-  Add [Marmalade](http://marmalade-repo.org) as a package source.
+  Add [MELPA](http://melpa.milkbox.net/#installing) or [Marmalade](http://marmalade-repo.org) as a package source.
   Run `M-x package-install git-gutter+`
 
 * Add the following to your .emacs file
