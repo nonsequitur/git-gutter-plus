@@ -489,9 +489,13 @@ calculated width looks wrong. (This can happen with some special characters.)"
                         (git-gutter+-search-here-diffinfo git-gutter+-diffinfos))
     (save-selected-window
       (with-current-buffer (get-buffer-create git-gutter+-popup-buffer)
+        (when diff-default-read-only
+          (read-only-mode -1))
         (erase-buffer)
         (insert (plist-get it :content))
         (insert "\n")
+        (when diff-default-read-only
+          (read-only-mode 1))
         (goto-char (point-min))
         (diff-mode)
         (pop-to-buffer (current-buffer))))))
