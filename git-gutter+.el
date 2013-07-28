@@ -533,9 +533,12 @@ calculated width looks wrong. (This can happen with some special characters.)"
            (host (aref vec 2)))
       (format "/%s:%s%s:%s" method (if user (concat user "@") "") host dir))))
 
-(defun git-gutter+-relative-path (dir curfile)
+(defun git-gutter+-file-path (dir curfile)
   (if (not (file-remote-p curfile))
-      (file-relative-name curfile dir)
+      (if (eq system-type 'windows-nt)
+          ;; Cygwin can't handle Windows absolute paths
+          (file-relative-name curfile dir)
+        curfile)
     (let ((file (aref (tramp-dissect-file-name curfile) 3)))
       (replace-regexp-in-string (concat "\\`" dir) "" curfile))))
 
@@ -545,7 +548,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
     (when (and file (file-exists-p file))
       (git-gutter+-awhen (git-gutter+-root-directory file)
         (let* ((default-directory (git-gutter+-default-directory it file))
-               (curfile (git-gutter+-relative-path default-directory file)))
+               (curfile (git-gutter+-file-path default-directory file)))
           (git-gutter+-process-diff curfile))))))
 
 (defun git-gutter+-clear ()
