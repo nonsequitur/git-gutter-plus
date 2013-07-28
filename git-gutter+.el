@@ -489,6 +489,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
                         (git-gutter+-search-here-diffinfo git-gutter+-diffinfos))
     (save-selected-window
       (with-current-buffer (get-buffer-create git-gutter+-popup-buffer)
+        (setq buffer-read-only nil)
         (erase-buffer)
         (insert (plist-get it :content))
         (insert "\n")
@@ -719,6 +720,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
         (if (<= (length (window-list)) 2)
             (split-window))
         (pop-to-buffer buf)))
+    (setq buffer-read-only nil)
     (erase-buffer)
     (let ((default-directory dir))
       (git-gutter+-call-git (list "diff" "--staged") file))
