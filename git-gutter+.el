@@ -524,32 +524,32 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (interactive "p")
   (git-gutter+-next-hunk (- arg)))
 
-(defun git-gutter+-default-directory (dir curfile)
-  (if (not (file-remote-p curfile))
-      dir
-    (let* ((vec (tramp-dissect-file-name curfile))
-           (method (aref vec 0))
-           (user (aref vec 1))
-           (host (aref vec 2)))
-      (format "/%s:%s%s:%s" method (if user (concat user "@") "") host dir))))
+(defun git-gutter+-remote-default-directory (dir file)
+  (let* ((vec (tramp-dissect-file-name file))
+         (method (aref vec 0))
+         (user (aref vec 1))
+         (host (aref vec 2)))
+    (format "/%s:%s%s:%s" method (if user (concat user "@") "") host dir)))
 
-(defun git-gutter+-file-path (dir curfile)
-  (if (not (file-remote-p curfile))
-      (if (eq system-type 'windows-nt)
-          ;; Cygwin can't handle Windows absolute paths
-          (file-relative-name curfile dir)
-        curfile)
-    (let ((file (aref (tramp-dissect-file-name curfile) 3)))
-      (replace-regexp-in-string (concat "\\`" dir) "" curfile))))
+(defun git-gutter+-remote-file-path (dir file)
+  (let ((file (aref (tramp-dissect-file-name file) 3)))
+    (replace-regexp-in-string (concat "\\`" dir) "" file)))
+
+(defun git-gutter+-local-file-path (file)
+  (if (eq system-type 'windows-nt)
+      ;; Cygwin can't handle Windows absolute paths
+      (file-relative-name file default-directory)
+    file))
 
 (defun git-gutter+-refresh ()
   (git-gutter+-clear)
   (let ((file (buffer-file-name)))
     (when (and file (file-exists-p file))
-      (git-gutter+-awhen (git-gutter+-root-directory file)
-        (let* ((default-directory (git-gutter+-default-directory it file))
-               (curfile (git-gutter+-file-path default-directory file)))
-          (git-gutter+-process-diff curfile))))))
+      (if (file-remote-p file)
+          (let* ((repo-root (git-gutter+-root-directory file))
+                 (default-directory (git-gutter+-remote-default-directory repo-root file)))
+            (git-gutter+-process-diff (git-gutter+-remote-file-path repo-root file)))
+        (git-gutter+-process-diff (git-gutter+-local-file-path file))))))
 
 (defun git-gutter+-clear ()
   (save-restriction
