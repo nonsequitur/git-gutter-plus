@@ -79,7 +79,7 @@ These are the differences to the default margin display mode in git-gutter+:
 Enable git-gutter-fringe+ like this:
 
     M-x package-install git-gutter-fringe+
-    (require git-gutter-fringe+)
+    (require 'git-gutter-fringe+)
 
     ;; Optional: Activate minimal skin
     (git-gutter-fr+-minimal)
