@@ -714,9 +714,11 @@ START and END (inclusive). START and END are both line numbers starting with 1."
   (git-gutter+-stage-hunks)
   (git-gutter+-commit))
 
+(defconst git-gutter+-staged-changes-buffer-name "*Staged Changes*")
+
 (defun git-gutter+-show-staged-changes (file dir)
   (save-selected-window
-    (let* ((buf    (get-buffer-create "*Staged Changes*"))
+    (let* ((buf    (get-buffer-create git-gutter+-staged-changes-buffer-name))
            (window (get-buffer-window buf)))
       (if window
           (select-window window)
