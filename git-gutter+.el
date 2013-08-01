@@ -697,6 +697,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
 
 
 ;;; Committing
+(defvar git-gutter+-pre-log-edit-window-config nil)
 
 ;;;###autoload
 (defun git-gutter+-commit ()
@@ -704,8 +705,11 @@ START and END (inclusive). START and END are both line numbers starting with 1."
   (let ((file (buffer-file-name))
         (dir default-directory))
     (require 'magit)
-    (setq magit-pre-log-edit-window-configuration (current-window-configuration))
+    (git-gutter+-save-window-config-if-needed)
     (magit-log-edit)
+    ;; The window config gets restored by Magit after committing or after cancelling
+    ;; the commit
+    (setq magit-pre-log-edit-window-configuration git-gutter+-pre-log-edit-window-config)
     (git-gutter+-show-staged-changes file dir)))
 
 ;;;###autoload
@@ -715,6 +719,16 @@ START and END (inclusive). START and END are both line numbers starting with 1."
   (git-gutter+-commit))
 
 (defconst git-gutter+-staged-changes-buffer-name "*Staged Changes*")
+
+(defun git-gutter+-save-window-config-if-needed ()
+  ;; Only save the window config if the temporary buffers that get popped-up by
+  ;; git-gutter+ are not already visible.
+  ;; In this way, `git-gutter+-commit' can be called twice in a row without
+  ;; losing the original window config.
+  (when (not (and git-gutter+-pre-log-edit-window-config
+                  (get-buffer-window magit-log-edit-buffer-name)
+                  (get-buffer-window git-gutter+-staged-changes-buffer-name)))
+    (setq git-gutter+-pre-log-edit-window-config (current-window-configuration))))
 
 (defun git-gutter+-show-staged-changes (file dir)
   (save-selected-window
