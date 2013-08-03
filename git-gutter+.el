@@ -734,15 +734,19 @@ If TYPE is not `modified', also remove all deletion (-) lines."
                   (get-buffer-window git-gutter+-staged-changes-buffer-name)))
     (setq git-gutter+-pre-log-edit-window-config (current-window-configuration))))
 
+(defsubst git-gutter+-pop-to-staged-changes-buffer ()
+  (let* ((buf    (get-buffer-create git-gutter+-staged-changes-buffer-name))
+         (window (get-buffer-window buf)))
+    (if window
+        ;; Buffer is already visible
+        (select-window window)
+      (if (<= (length (window-list)) 2)
+          (split-window))
+      (pop-to-buffer buf))))
+
 (defun git-gutter+-show-staged-changes (file dir)
   (save-selected-window
-    (let* ((buf    (get-buffer-create git-gutter+-staged-changes-buffer-name))
-           (window (get-buffer-window buf)))
-      (if window
-          (select-window window)
-        (if (<= (length (window-list)) 2)
-            (split-window))
-        (pop-to-buffer buf)))
+    (git-gutter+-pop-to-staged-changes-buffer)
     (setq buffer-read-only nil)
     (erase-buffer)
     (let ((default-directory dir))
