@@ -673,6 +673,8 @@ START and END (inclusive). START and END are both line numbers starting with 1."
     (delete-region hunk-start (point))))
 
 (defun git-gutter+-modify-hunk (type num-lines-selected del-len start)
+  "Remove all addition (+) lines from hunk that aren't selected.
+If TYPE is not `modified', also remove all deletion (-) lines."
   (let ((first-line-selected (+ del-len (1- start)))
         selected-lines)
     (save-excursion
