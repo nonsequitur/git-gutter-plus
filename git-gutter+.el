@@ -185,6 +185,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defun git-gutter+-get-diffinfos ()
   (loop while (re-search-forward git-gutter+-hunk-header-regex nil t)
+        ;; Hunk header format:
         ;; @@ -{del-line},{del-len} +{add-line},{add-len} @@
         for del-len  = (string-to-number (or (match-string 2) "1"))
         for add-line = (string-to-number (match-string 3))
@@ -204,11 +205,12 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defun git-gutter+-diff-content ()
   (save-excursion
-    (goto-char (line-beginning-position))
+    (goto-char (line-beginning-position)) ; Move to beginning of hunk header
     (let ((hunk-start (point)))
+      ;; Move to end of hunk
       (forward-line 1)
       (if (re-search-forward "^@@" nil t)
-          (backward-char 3) ;; for '@@'
+          (backward-char 3) ;; exclude "\n@@"
         (goto-char (1- (point-max)))) ; Skip trailing newline
       (buffer-substring hunk-start (point)))))
 
