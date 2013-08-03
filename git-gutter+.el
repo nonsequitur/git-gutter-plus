@@ -661,7 +661,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
       (git-gutter+-delete-hunk-header)
 
       (if (not insert-all-p)
-          (git-gutter+-modify-hunk type num-lines-selected del-len start end))
+          (git-gutter+-modify-hunk type num-lines-selected del-len start))
 
       (let ((hunk-header (git-gutter+-make-hunk-header type num-lines-selected
                                                       del-line del-len add-line)))
@@ -672,7 +672,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
     (forward-line 1)
     (delete-region hunk-start (point))))
 
-(defun git-gutter+-modify-hunk (type num-lines-selected del-len start end)
+(defun git-gutter+-modify-hunk (type num-lines-selected del-len start)
   (let ((first-line-selected (+ del-len (1- start)))
         selected-lines)
     (save-excursion
