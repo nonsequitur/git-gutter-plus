@@ -205,12 +205,12 @@ calculated width looks wrong. (This can happen with some special characters.)"
 (defun git-gutter+-diff-content ()
   (save-excursion
     (goto-char (line-beginning-position))
-    (let ((curpoint (point)))
+    (let ((hunk-start (point)))
       (forward-line 1)
       (if (re-search-forward "^@@" nil t)
           (backward-char 3) ;; for '@@'
         (goto-char (1- (point-max)))) ; Skip trailing newline
-      (buffer-substring curpoint (point)))))
+      (buffer-substring hunk-start (point)))))
 
 (defun git-gutter+-line-to-pos (line)
   (save-excursion
@@ -642,7 +642,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
     (let* ((start (max 1 (or start 1)))
            (end   (min add-len (or end add-len)))
            (insert-all-p (or (eq type :deleted)
-                             (and (eq start 1) (eq end add-len))))
+                             (and (= start 1) (= end add-len))))
            (num-lines-selected (if insert-all-p
                                    add-len
                                  (1+ (- end start)))))
@@ -650,7 +650,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
       ;; not the complete hunk), then don't insert any deletion (-) lines from that
       ;; hunk.
       (if (and (eq type 'modified)
-               (< 1 start) (= end add-len))
+               (> start 1) (= end add-len))
           (setq type 'modified-trailing))
 
       (save-excursion
@@ -742,7 +742,7 @@ START and END (inclusive). START and END are both line numbers starting with 1."
     (setq buffer-read-only nil)
     (erase-buffer)
     (let ((default-directory dir))
-      (git-gutter+-call-git (list "diff" "--staged") file))
+      (git-gutter+-call-git '("diff" "--staged") file))
     (goto-char (point-min))
     (diff-mode)))
 
