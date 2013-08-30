@@ -440,9 +440,9 @@ calculated width looks wrong. (This can happen with some special characters.)"
                    (1- (- (length diffinfos) index))
                  index)))
 
-(defun git-gutter+-search-here-diffinfo (diffinfos)
+(defun git-gutter+-diffinfo-at-point ()
   (loop with current-line = (line-number-at-pos)
-        for diffinfo in diffinfos
+        for diffinfo in git-gutter+-diffinfos
         for start = (plist-get diffinfo :start-line)
         for end   = (or (plist-get diffinfo :end-line) (1+ start))
         when (and (>= current-line start) (<= current-line end))
@@ -482,7 +482,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
 (defun git-gutter+-revert-hunk ()
   "Revert current hunk."
   (interactive)
-  (git-gutter+-awhen (git-gutter+-search-here-diffinfo git-gutter+-diffinfos)
+  (git-gutter+-awhen (git-gutter+-diffinfo-at-point)
     (save-window-excursion
       (git-gutter+-popup-hunk it)
       (when (yes-or-no-p "Revert current hunk?")
@@ -494,7 +494,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
   "popup current diff hunk"
   (interactive)
   (git-gutter+-awhen (or diffinfo
-                        (git-gutter+-search-here-diffinfo git-gutter+-diffinfos))
+                        (git-gutter+-diffinfo-at-point))
     (save-selected-window
       (with-current-buffer (get-buffer-create git-gutter+-popup-buffer)
         (setq buffer-read-only nil)
@@ -582,7 +582,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
 (defun git-gutter+-diffinfos-to-stage (line-range)
   (if line-range
       (git-gutter+-diffinfos-between-lines line-range)
-    (git-gutter+-awhen (git-gutter+-search-here-diffinfo git-gutter+-diffinfos)
+    (git-gutter+-awhen (git-gutter+-diffinfo-at-point)
       (list it))))
 
 (defsubst git-gutter+-diffinfo-between-lines-p (diffinfo start-line end-line)
