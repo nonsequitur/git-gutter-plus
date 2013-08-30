@@ -559,6 +559,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
 ;;; Staging
 
 (defun git-gutter+-stage-hunks ()
+  "Stage hunk at point. If region is active, stage all hunk lines within the region."
   (interactive)
   (let* ((line-range (if (use-region-p)
                          (cons (line-number-at-pos (region-beginning))
