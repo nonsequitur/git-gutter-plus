@@ -452,12 +452,14 @@ calculated width looks wrong. (This can happen with some special characters.)"
                  index)))
 
 (defun git-gutter+-diffinfo-at-point ()
-  (loop with current-line = (line-number-at-pos)
-        for diffinfo in git-gutter+-diffinfos
-        for start = (plist-get diffinfo :start-line)
-        for end   = (or (plist-get diffinfo :end-line) (1+ start))
-        when (and (>= current-line start) (<= current-line end))
-        return diffinfo))
+  (save-restriction
+    (widen)
+    (loop with current-line = (line-number-at-pos)
+          for diffinfo in git-gutter+-diffinfos
+          for start = (plist-get diffinfo :start-line)
+          for end   = (or (plist-get diffinfo :end-line) (1+ start))
+          when (and (>= current-line start) (<= current-line end))
+          return diffinfo)))
 
 (defun git-gutter+-collect-deleted-line (str)
   (with-temp-buffer
@@ -479,16 +481,18 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defun git-gutter+-do-revert-hunk (diffinfo)
   (save-excursion
-    (goto-char (point-min))
-    (let ((start-line (plist-get diffinfo :start-line))
-          (end-line (plist-get diffinfo :end-line))
-          (content (plist-get diffinfo :content)))
-      (case (plist-get diffinfo :type)
-        (added (git-gutter+-delete-added-lines start-line end-line))
-        (deleted (forward-line (1- start-line))
-                 (git-gutter+-insert-deleted-lines content))
-        (modified (git-gutter+-delete-added-lines start-line end-line)
-                  (git-gutter+-insert-deleted-lines content))))))
+    (save-restriction
+      (widen)
+      (goto-char (point-min))
+      (let ((start-line (plist-get diffinfo :start-line))
+            (end-line (plist-get diffinfo :end-line))
+            (content (plist-get diffinfo :content)))
+        (case (plist-get diffinfo :type)
+          (added (git-gutter+-delete-added-lines start-line end-line))
+          (deleted (forward-line (1- start-line))
+                   (git-gutter+-insert-deleted-lines content))
+          (modified (git-gutter+-delete-added-lines start-line end-line)
+                    (git-gutter+-insert-deleted-lines content)))))))
 
 (defun git-gutter+-revert-hunks ()
   "Revert hunk at point. If region is active, revert all hunks within the region."
@@ -530,20 +534,22 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (interactive "p")
   (if (not git-gutter+-diffinfos)
       (message "No changes in buffer")
-    (let* ((is-reverse (< arg 0))
-           (diffinfos git-gutter+-diffinfos)
-           (len (length diffinfos))
-           (index (git-gutter+-search-near-diff-index diffinfos is-reverse))
-           (real-index (if index
-                           (let ((next (if is-reverse (1+ index) (1- index))))
-                             (mod (+ arg next) len))
-                         (if is-reverse (1- (length diffinfos)) 0)))
-           (diffinfo (nth real-index diffinfos)))
-      (goto-char (point-min))
-      (forward-line (1- (plist-get diffinfo :start-line)))
-      (when (buffer-live-p (get-buffer git-gutter+-popup-buffer))
-        (save-window-excursion
-          (git-gutter+-show-hunk))))))
+    (save-restriction
+      (widen)
+      (let* ((is-reverse (< arg 0))
+             (diffinfos git-gutter+-diffinfos)
+             (len (length diffinfos))
+             (index (git-gutter+-search-near-diff-index diffinfos is-reverse))
+             (real-index (if index
+                             (let ((next (if is-reverse (1+ index) (1- index))))
+                               (mod (+ arg next) len))
+                           (if is-reverse (1- (length diffinfos)) 0)))
+             (diffinfo (nth real-index diffinfos)))
+        (goto-char (point-min))
+        (forward-line (1- (plist-get diffinfo :start-line)))
+        (when (buffer-live-p (get-buffer git-gutter+-popup-buffer))
+          (save-window-excursion
+            (git-gutter+-show-hunk)))))))
 
 (defun git-gutter+-previous-hunk (arg)
   "Move to previous diff hunk"
@@ -616,14 +622,16 @@ calculated width looks wrong. (This can happen with some special characters.)"
          (<= diff-start end-line))))
 
 (defun git-gutter+-diffinfos-between-lines (line-range)
-  (let ((start-line (car line-range))
-        (end-line   (cdr line-range)))
-    (delq nil
-          (mapcar (lambda (diffinfo)
-                    (if (git-gutter+-diffinfo-between-lines-p
-                         diffinfo start-line end-line)
-                        diffinfo))
-                  git-gutter+-diffinfos))))
+  (save-restriction
+    (widen)
+    (let ((start-line (car line-range))
+          (end-line   (cdr line-range)))
+      (delq nil
+            (mapcar (lambda (diffinfo)
+                      (if (git-gutter+-diffinfo-between-lines-p
+                           diffinfo start-line end-line)
+                          diffinfo))
+                    git-gutter+-diffinfos)))))
 
 (defun git-gutter+-stage-diffinfos (diffinfos line-range)
   (let ((header git-gutter+-diff-header))
