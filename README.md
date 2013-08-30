@@ -1,4 +1,5 @@
-# git-gutter+.el
+git-gutter+.el
+==============
 
 View, stage and revert Git changes straight from the buffer.
 
@@ -7,7 +8,8 @@ plugin for Sublime Text.)
 
 ![git-gutter](images/git-gutter-main.png)
 
-## Changes since [Git-Gutter](https://github.com/syohex/emacs-git-gutter) 0.42
+Changes since [Git-Gutter](https://github.com/syohex/emacs-git-gutter) 0.42
+-------------
 
 This package contains patches that haven't yet been added to [Git-Gutter](https://github.com/syohex/emacs-git-gutter).
 - Improved performance
@@ -21,7 +23,8 @@ This package contains patches that haven't yet been added to [Git-Gutter](https:
 - Removed mode-on/off-hook variables
 - Renamed `git-gutter:diff-option` to `git-gutter:diff-options`
 
-## Get Started
+Get Started
+-----------
 
 * Install with package.el
 
@@ -59,7 +62,8 @@ This package contains patches that haven't yet been added to [Git-Gutter](https:
         (global-set-key (kbd "C-x g") 'git-gutter+-mode) ; Turn on/off in the current buffer
         (global-set-key (kbd "C-x G") 'global-git-gutter+-mode) ; Turn on/off globally
 
-## [git-gutter-fringe+.el](https://github.com/nonsequitur/git-gutter-fringe-plus)
+[git-gutter-fringe+.el](https://github.com/nonsequitur/git-gutter-fringe-plus)
+-----------------------
 
 ![git-gutter-fringe-minimal](https://raw.github.com/nonsequitur/git-gutter-fringe-plus/master/images/git-gutter-fringe-minimal.png)
 
@@ -84,7 +88,8 @@ Enable git-gutter-fringe+ like this:
     ;; Optional: Activate minimal skin
     (git-gutter-fr+-minimal)
 
-## Commands
+Commands
+--------
 
 #### `git-gutter+-mode`
 Enable/disable git-gutter+ in the current buffer.
@@ -124,16 +129,20 @@ Commit staged changes with Magit.
 
 Calls `git-gutter+-stage-hunks` followed by `git-gutter+-commit`.
 
-## Requirements
+Requirements
+------------
 
 * Emacs 23 or higher
 * Magit, if you use the committing features.
 * [Git](http://git-scm.com/) 1.7.0 or higher
 
-## Tramp
+Tramp
+-----
+
 Git-Gutter supports TRAMP for remote file support.
 
-# This section of the manual hasn't yet been cleaned up.
+This section of the manual hasn't yet been cleaned up.
+======================================================
 
 ## Customize
 
