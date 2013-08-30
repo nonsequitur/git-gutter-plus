@@ -41,6 +41,11 @@ calculated width looks wrong. (This can happen with some special characters.)"
   :type 'integer
   :group 'git-gutter+)
 
+(defcustom git-gutter+-git-executable "git"
+  "The path of the Git executable."
+  :type 'string
+  :group 'git-gutter+)
+
 (defcustom git-gutter+-diff-options nil
   "List of strings containing extra arguments to 'git diff'"
   :type 'list
@@ -150,8 +155,8 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defun git-gutter+-call-git (args file)
   (if (not (file-remote-p file))
-      (apply #'call-process "git" nil t nil args)
-    (apply #'process-file "git" nil t nil args)))
+      (apply #'call-process git-gutter+-git-executable nil t nil args)
+    (apply #'process-file git-gutter+-git-executable nil t nil args)))
 
 (defun git-gutter+-in-git-repository-p (file)
   (with-temp-buffer
@@ -633,7 +638,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
  RETURNS nil if Git ran successfully. Returns an error description otherwise."
   (unless (zerop (apply #'call-process-region (point-min) (point-max)
-                        "git" t t nil args))
+                        git-gutter+-git-executable t t nil args))
     (buffer-string)))
 
 (defsubst git-gutter+-read-hunk-header (hunk)
