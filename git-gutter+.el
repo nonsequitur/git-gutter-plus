@@ -612,8 +612,8 @@ calculated width looks wrong. (This can happen with some special characters.)"
       (dolist (diffinfo (nreverse diffinfos))
         (git-gutter+-insert-diffinfo diffinfo line-range)
         (goto-char (point-max)))
-      (git-gutter+-call-on-current-buffer
-       "git" "apply" "--unidiff-zero" "--cached" "-"))))
+      (git-gutter+-call-git-on-current-buffer
+       '("apply" "--unidiff-zero" "--cached" "-")))))
 
 (defun git-gutter+-insert-diffinfo (diffinfo line-range)
   (let ((content (plist-get diffinfo :content))
@@ -628,10 +628,12 @@ calculated width looks wrong. (This can happen with some special characters.)"
                                 (1+ (- start-line diff-start-line))
                                 (1+ (- end-line diff-start-line)))))))
 
-(defun git-gutter+-call-on-current-buffer (program &rest args)
-  "Returns nil if PROGRAM ran successfully. Returns an error description otherwise."
+(defun git-gutter+-call-git-on-current-buffer (args)
+  "Sends the current buffer contents to Git and replaces them with Git's output.
+
+ RETURNS nil if Git ran successfully. Returns an error description otherwise."
   (unless (zerop (apply #'call-process-region (point-min) (point-max)
-                        program t t nil args))
+                        "git" t t nil args))
     (buffer-string)))
 
 (defsubst git-gutter+-read-hunk-header (hunk)
