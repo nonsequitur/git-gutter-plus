@@ -471,7 +471,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (modified (git-gutter+-delete-added-lines start-line end-line)
                   (git-gutter+-insert-deleted-lines content))))))
 
-;;;###autoload
 (defun git-gutter+-revert-hunk ()
   "Revert current hunk."
   (interactive)
@@ -483,7 +482,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (save-buffer))
       (delete-window (get-buffer-window (get-buffer git-gutter+-popup-buffer))))))
 
-;;;###autoload
 (defun git-gutter+-popup-hunk (&optional diffinfo)
   "popup current diff hunk"
   (interactive)
@@ -499,7 +497,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (diff-mode)
         (pop-to-buffer (current-buffer))))))
 
-;;;###autoload
 (defun git-gutter+-next-hunk (arg)
   "Move to next diff hunk"
   (interactive "p")
@@ -520,7 +517,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (save-window-excursion
           (git-gutter+-popup-hunk))))))
 
-;;;###autoload
 (defun git-gutter+-previous-hunk (arg)
   "Move to previous diff hunk"
   (interactive "p")
@@ -562,7 +558,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 ;;; Staging
 
-;;;###autoload
 (defun git-gutter+-stage-hunks ()
   (interactive)
   (let* ((line-range (if (use-region-p)
@@ -716,7 +711,6 @@ If TYPE is not `modified', also remove all deletion (-) lines."
     (setq magit-pre-log-edit-window-configuration git-gutter+-pre-log-edit-window-config)
     (git-gutter+-show-staged-changes file dir)))
 
-;;;###autoload
 (defun git-gutter+-stage-and-commit ()
   (interactive)
   (git-gutter+-stage-hunks)
