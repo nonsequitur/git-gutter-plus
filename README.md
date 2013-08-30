@@ -3,25 +3,15 @@ git-gutter+.el
 
 View, stage and revert Git changes straight from the buffer.
 
-(`git-gutter+.el` is inspired by the [GitGutter](https://github.com/jisaacks/GitGutter)
-plugin for Sublime Text.)
+(This package is inspired by the [GitGutter](https://github.com/jisaacks/GitGutter)
+plugin for Sublime Text. It contains patches that haven't yet been added
+to [Git-Gutter](https://github.com/syohex/emacs-git-gutter).)
 
 ![git-gutter](images/git-gutter-main.png)
 
-Changes since [Git-Gutter](https://github.com/syohex/emacs-git-gutter) 0.42
--------------
-
-This package contains patches that haven't yet been added to [Git-Gutter](https://github.com/syohex/emacs-git-gutter).
-- Improved performance
-- Staging and committing hunks
-- A bug-free `git-gutter-fringe.el` and other fixes
-- The following interactive commands have been removed.
-  They are superseded by `git-gutter+-mode`.
-  - git-gutter
-  - git-gutter:toggle
-  - git-gutter:clear
-- Removed mode-on/off-hook variables
-- Renamed `git-gutter:diff-option` to `git-gutter:diff-options`
+[Changelog](#changelog-1)
+-----------
+Jump to [Changelog](#changelog-1).
 
 Get Started
 -----------
@@ -91,6 +81,9 @@ Enable git-gutter-fringe+ like this:
     ;; Optional: Activate minimal skin
     (git-gutter-fr+-minimal)
 
+To interactively disable/enable the fringe display mode, run
+`M-x git-gutter+-toggle-fringe`.
+
 Commands
 --------
 
@@ -155,6 +148,39 @@ are provided:
 
 `git-commit-ack` is re-bound to `C-c C-b`.
 
+Changelog
+---------
+
+### 0.1
+  * New commit interface based on git-commit-mode.
+    See section 'Committing' to learn more.
+  * Added `git-gutter+-mode-map`.
+    Consider migrating some of your global git-gutter+ bindings to the local
+    keymap.
+    See section 'Add keybindings' for an example.
+  * Properly support narrowed buffers
+  * Revert hunks within region (or hunk at point) with `git-gutter+-revert-hunks`
+    Please update your key binding.
+    (The old name 'git-gutter+-revert-hunk' is still accessible by an alias.)
+  * Renamed `git-gutter+-popup-hunk` to `git-gutter+-show-hunk`
+    Please update your key binding.
+    (The old name is still accessible by an alias.)
+  * Added customizable variable 'git-gutter+-git-executable'
+  * Package git-gutter-fringe+:
+    Added `git-gutter+-toggle-fringe` to enable/disable the fringe display mode.
+
+### 0.02 (Changes since [Git-Gutter](https://github.com/syohex/emacs-git-gutter) 0.42)
+  * Improved performance
+  * Staging and committing hunks
+  * A bug-free `git-gutter-fringe.el` and other fixes
+  * The following interactive commands have been removed.
+    They are superseded by `git-gutter+-mode`.
+    * git-gutter
+    * git-gutter-toggle
+    * git-gutter-clear
+  * Removed mode-on/off-hook variables
+  * Renamed `git-gutter-diff-option` to `git-gutter-diff-options`
+
 Requirements
 ------------
 
@@ -166,8 +192,8 @@ Tramp
 
 Git-Gutter supports TRAMP for remote file support.
 
-This section of the manual hasn't yet been cleaned up.
-======================================================
+This section of the manual hasn't yet been cleaned up. (But it's factually correct.)
+------------------------------------------------------------------------------------
 
 ## Customize
 
