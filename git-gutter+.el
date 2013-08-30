@@ -111,13 +111,13 @@ calculated width looks wrong. (This can happen with some special characters.)"
   :type '(repeat symbol)
   :group 'git-gutter+)
 
-(defvar git-gutter+-view-diff-function 'git-gutter+-view-diff-infos
-  "Display diffs")
+(defvar git-gutter+-view-diff-function nil
+  "Function to call for displaying diffs")
 
-(defvar git-gutter+-clear-function 'git-gutter+-clear-diff-infos
-  "Clear diff display")
+(defvar git-gutter+-clear-function nil
+  "Function to call for clearing the diff display")
 
-(defvar git-gutter+-window-config-change-function 'git-gutter+-show-gutter
+(defvar git-gutter+-window-config-change-function nil
   "Function to call when the buffer's local window configuration has changed")
 
 (defvar git-gutter+-diffinfos nil)
@@ -137,6 +137,14 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (declare (indent 1))
   `(let ((it ,test))
      (when it ,@body)))
+
+(defun git-gutter+-enable-default-display-mode ()
+  (setq git-gutter+-view-diff-function 'git-gutter+-view-diff-infos
+        git-gutter+-clear-function     'git-gutter+-clear-diff-infos
+        git-gutter+-window-config-change-function 'git-gutter+-show-gutter))
+
+(unless git-gutter+-view-diff-function
+  (git-gutter+-enable-default-display-mode))
 
 (defun git-gutter+-call-git (args file)
   (if (not (file-remote-p file))
