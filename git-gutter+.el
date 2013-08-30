@@ -19,6 +19,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;; Package-Requires: ((git-commit-mode "1.0"))
+
 ;;; Commentary:
 ;;
 ;; View, stage and revert Git changes straight from the buffer.
@@ -29,6 +31,8 @@
   (require 'cl))
 
 (require 'tramp)
+(require 'log-edit)
+(require 'git-commit-mode)
 
 (defgroup git-gutter+ nil
   "Port GitGutter"
@@ -157,10 +161,10 @@ calculated width looks wrong. (This can happen with some special characters.)"
 (unless git-gutter+-view-diff-function
   (git-gutter+-enable-default-display-mode))
 
-(defun git-gutter+-call-git (args file)
-  (if (not (file-remote-p file))
-      (apply #'call-process git-gutter+-git-executable nil t nil args)
-    (apply #'process-file git-gutter+-git-executable nil t nil args)))
+(defun git-gutter+-call-git (args &optional file)
+  (if (and file (file-remote-p file))
+      (apply #'process-file git-gutter+-git-executable nil t nil args)
+    (apply #'call-process git-gutter+-git-executable nil t nil args)))
 
 (defun git-gutter+-in-git-repository-p (file)
   (with-temp-buffer
@@ -739,19 +743,30 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 
 
 ;;; Committing
-(defvar git-gutter+-pre-log-edit-window-config nil)
+;; This section draws heavily from old Magit source code.
+
+(defvar git-gutter+-pre-commit-window-config nil)
+(defvar git-gutter+-commit-origin-buffer nil
+  "Buffer that started the commit")
+
+(defconst git-gutter+-commit-buffer-name "*Commit Message*")
+(defconst git-gutter+-staged-changes-buffer-name "*Staged Changes*")
 
 ;;;###autoload
 (defun git-gutter+-commit ()
+  "Commit staged changes. If nothing is staged, ask to stage the current buffer."
   (interactive)
+
+  (when (and (not (git-gutter+-anything-staged-p))
+             git-gutter+-diffinfos
+             (y-or-n-p "Nothing staged. Stage current buffer? "))
+    (git-gutter+-stage-whole-buffer))
+
   (let ((file (buffer-file-name))
         (dir default-directory))
-    (require 'magit)
     (git-gutter+-save-window-config-if-needed)
-    (magit-log-edit)
-    ;; The window config gets restored by Magit after committing or after cancelling
-    ;; the commit
-    (setq magit-pre-log-edit-window-configuration git-gutter+-pre-log-edit-window-config)
+    (setq git-gutter+-commit-origin-buffer (current-buffer))
+    (git-gutter+-open-commit-edit-buffer dir)
     (git-gutter+-show-staged-changes file dir)))
 
 (defun git-gutter+-stage-and-commit ()
@@ -759,17 +774,22 @@ If TYPE is not `modified', also remove all deletion (-) lines."
   (git-gutter+-stage-hunks)
   (git-gutter+-commit))
 
-(defconst git-gutter+-staged-changes-buffer-name "*Staged Changes*")
-
 (defun git-gutter+-save-window-config-if-needed ()
   ;; Only save the window config if the temporary buffers that get popped-up by
   ;; git-gutter+ are not already visible.
   ;; In this way, `git-gutter+-commit' can be called twice in a row without
   ;; losing the original window config.
-  (when (not (and git-gutter+-pre-log-edit-window-config
-                  (get-buffer-window magit-log-edit-buffer-name)
+  (when (not (and git-gutter+-pre-commit-window-config
+                  (get-buffer-window git-gutter+-commit-buffer-name)
                   (get-buffer-window git-gutter+-staged-changes-buffer-name)))
-    (setq git-gutter+-pre-log-edit-window-config (current-window-configuration))))
+    (setq git-gutter+-pre-commit-window-config (current-window-configuration))))
+
+(defun git-gutter+-open-commit-edit-buffer (dir)
+  "Opens a buffer for composing the commit message"
+  (pop-to-buffer (get-buffer-create git-gutter+-commit-buffer-name))
+  (setq default-directory dir)
+  (git-gutter+-commit-mode)
+  (message "Type C-c C-c to commit (C-c C-k to cancel)."))
 
 (defsubst git-gutter+-pop-to-staged-changes-buffer ()
   (let* ((buf    (get-buffer-create git-gutter+-staged-changes-buffer-name))
@@ -790,6 +810,245 @@ If TYPE is not `modified', also remove all deletion (-) lines."
       (git-gutter+-call-git '("diff" "--staged") file))
     (goto-char (point-min))
     (diff-mode)))
+
+(defsubst git-gutter+-abort-commit-when-no-changes (allow-empty amend)
+  (unless (or amend
+              allow-empty
+              (git-gutter+-anything-staged-p))
+    (error
+     "Refusing to create empty commit. Maybe you want to amend (%s) or allow-empty (%s)?"
+     (key-description (car (where-is-internal
+                            'git-gutter+-commit-toggle-amending)))
+     (key-description (car (where-is-internal
+                            'git-gutter+-commit-toggle-allow-empty))))))
+
+(defsubst git-gutter+-buffer-is-whitespace ()
+  (save-excursion
+    (goto-char (point-min))
+    (looking-at-p "[ \t\n]*\\'")))
+
+(defun git-gutter+-publish-commit ()
+  "Publish commit"
+  (interactive)
+  (let* ((fields (git-gutter+-commit-get-fields))
+         (amend       (equal "yes" (git-gutter+-commit-get-field 'amend       fields)))
+         (allow-empty (equal "yes" (git-gutter+-commit-get-field 'allow-empty fields)))
+         (author      (git-gutter+-commit-get-field 'author fields))
+         (date        (git-gutter+-commit-get-field 'date fields)))
+
+    (git-gutter+-abort-commit-when-no-changes allow-empty amend)
+
+    (git-gutter+-push-to-comment-ring (buffer-string))
+
+    (git-gutter+-commit-set-fields nil) ; Delete message header
+
+    (when (git-gutter+-buffer-is-whitespace)
+      (erase-buffer)
+      (insert "(Empty description)"))
+
+    (let ((error-msg (git-gutter+-call-git-on-current-buffer
+                      (append '("--no-pager" "commit" "-F" "-")
+                              (if amend '("--amend"))
+                              (if allow-empty '("--allow-empty"))
+                              (if author (list (concat "--author=" author)))
+                              (if date   (list (concat "--date=" date)))))))
+      (if error-msg
+          (progn
+            (message "Commit error:\n%s" error-msg)
+            (erase-buffer)
+            (insert (ring-ref log-edit-comment-ring 0))) ; Reinsert commit message
+        (message "Commit successful.")
+        (git-gutter+-close-commit-edit-buffer)
+        (git-gutter+-update-vc-modeline)))))
+
+(defun git-gutter+-close-commit-edit-buffer ()
+  "Abort edits and discard commit message being composed."
+  (interactive)
+  (kill-buffer)
+  (set-window-configuration git-gutter+-pre-commit-window-config))
+
+(defun git-gutter+-update-vc-modeline ()
+  (when (buffer-live-p git-gutter+-commit-origin-buffer)
+    (with-current-buffer git-gutter+-commit-origin-buffer
+      ;; Updating the modeline has no effect if the buffer still has
+      ;; changes - it will remain in the 'modified' state. So skip it then.
+      (unless git-gutter+-diffinfos
+        (ignore-errors (vc-find-file-hook))))))
+
+(defun git-gutter+-stage-whole-buffer ()
+  (save-excursion
+    (mark-whole-buffer)
+    (git-gutter+-stage-hunks)))
+
+(defun git-gutter+-anything-staged-p ()
+  "Return t if the current repo has staged changes"
+  (not (zerop (git-gutter+-call-git '("diff" "--quiet" "--cached")))))
+
+(defun git-gutter+-commit-toggle-amending ()
+  "Toggle whether this will be an amendment to the previous commit.
+\(i.e., whether commit is run via 'git commit --amend')"
+  (interactive)
+  (let ((amend-was-already-set (git-gutter+-commit-get-field 'amend)))
+    (git-gutter+-commit-toggle-field 'amend t)
+    (unless amend-was-already-set
+      ;; Insert previous commit message
+      (goto-char (point-max))
+      (unless (zerop (current-column))
+        (insert "\n"))
+      (insert (git-gutter+-get-last-commit-msg)
+              "\n"))))
+
+(defun git-gutter+-commit-toggle-allow-empty ()
+  "Toggle whether this commit is allowed to be empty.
+\(i.e., whether commit is run via 'git commit --allow-empty')"
+  (interactive)
+  (git-gutter+-commit-toggle-field 'allow-empty t))
+
+(defun git-gutter+-format-author (author email)
+  (format "%s <%s>" author email))
+
+(defun git-gutter+-commit-toggle-author ()
+  "Toggle whether this commit should have a user-defined author."
+  (interactive)
+  (git-gutter+-commit-toggle-input
+   'author (git-gutter+-format-author
+            (or (git-gutter+-get-cfg "user" "name") "Author Name")
+            (or (git-gutter+-get-cfg "user" "email") "author@email"))))
+
+(defun git-gutter+-commit-toggle-date ()
+  "Toggle whether this commit should have a user-defined date."
+  (interactive)
+  (git-gutter+-commit-toggle-input 'date
+                                  ;; ISO 8601
+                                  (format-time-string "%Y-%m-%dT%T%z" (current-time))))
+
+(defun git-gutter+-push-to-comment-ring (comment)
+  (when (or (ring-empty-p log-edit-comment-ring)
+            (not (equal comment (ring-ref log-edit-comment-ring 0))))
+    (ring-insert log-edit-comment-ring comment)))
+
+(defun git-gutter+-get-last-commit-msg ()
+  (git-gutter+-git-output '("log" "--max-count=1" "--pretty=format:%s%n%n%b" "HEAD")))
+
+(defun git-gutter+-get-cfg (&rest keys)
+  (git-gutter+-git-output (list "config" (mapconcat 'identity keys "."))))
+
+(defun git-gutter+-git-output (args)
+  (with-temp-buffer
+    (git-gutter+-call-git args)
+    ;; Delete trailing newlines
+    (goto-char (point-min))
+    (if (re-search-forward "\n+\\'" nil t)
+        (replace-match ""))
+    (buffer-string)))
+
+
+;;; Commit message header
+
+(defconst git-gutter+-commit-header-end "-- End of commit options header --\n")
+
+(defun git-gutter+-commit-get-field (name &optional fields)
+  (cdr (assq name (or fields (git-gutter+-commit-get-fields)))))
+
+(defun git-gutter+-commit-set-field (name value)
+  (let* ((fields (git-gutter+-commit-get-fields))
+         (cell   (assq name fields)))
+    (cond (cell
+           (if value
+               (rplacd cell value)
+             (setq fields (delq cell fields))))
+          (t
+           (if value
+               (setq fields (append fields (list (cons name value)))))))
+    (git-gutter+-commit-set-fields fields)))
+
+(defun git-gutter+-commit-toggle-field (name default)
+  "Toggle the commit header field named NAME.
+If it's currently unset, set it to DEFAULT (t or nil)."
+  (let* ((fields (git-gutter+-commit-get-fields))
+         (cell   (assq name fields)))
+    (if cell
+        (rplacd cell (if (equal (cdr cell) "yes") "no" "yes"))
+      (setq fields (acons name (if default "yes" "no") fields)))
+    (git-gutter+-commit-set-fields fields)))
+
+(defun git-gutter+-commit-toggle-input (name default)
+  "Toggle the commit header input named NAME.
+If it's currently unset, set it to DEFAULT (a string). If it is
+set remove it."
+  (let* ((fields (git-gutter+-commit-get-fields))
+         (cell (assq name fields)))
+    (if cell
+        (setq fields (assq-delete-all name fields))
+      (setq fields (acons name default fields)))
+    (git-gutter+-commit-set-fields fields)))
+
+(defun git-gutter+-commit-get-fields ()
+  (let (result)
+    (goto-char (point-min))
+    (while (looking-at "^\\([A-Za-z0-9-_]+\\): *\\(.+\\)?$")
+      (let ((name  (intern (downcase (match-string 1))))
+            (value (read (or (match-string 2) "nil"))))
+        (push (cons name value) result))
+      (forward-line))
+    (if (looking-at (regexp-quote git-gutter+-commit-header-end))
+        (nreverse result))))
+
+(defun git-gutter+-commit-set-fields (fields)
+  (goto-char (point-min))
+  ;; Delete commit header
+  (if (search-forward-regexp (format "^\\(?:[A-Za-z0-9-_]+:.*\n\\)*%s"
+                                     (regexp-quote git-gutter+-commit-header-end))
+                             nil t)
+      (delete-region (match-beginning 0) (match-end 0)))
+  (goto-char (point-min))
+  (when fields
+    (dolist (field fields)
+      (insert (capitalize (symbol-name (car field))) ": "
+              (prin1-to-string (cdr field)) "\n"))
+    (insert git-gutter+-commit-header-end)))
+
+
+;;; git-gutter+-commit-mode
+;; Like git-commit-mode, but adds keybindings to git-gutter+ commands and
+;; highlighting support for the commit message header.
+
+(define-derived-mode git-gutter+-commit-mode git-commit-mode "Git-Gutter-Commit"
+  (setq-local git-commit-summary-regexp git-gutter+-commit-summary-regexp)
+  (setq font-lock-defaults '(git-gutter+-commit-font-lock-keywords t)))
+
+(defconst git-gutter+-commit-mode-map
+  (let ((map (copy-keymap git-commit-mode-map)))
+    (define-key map (kbd "C-c C-c") 'git-gutter+-publish-commit)
+    (define-key map (kbd "C-c C-k") 'git-gutter+-close-commit-edit-buffer)
+    (define-key map (kbd "C-c C-a") 'git-gutter+-commit-toggle-amending)
+    (define-key map (kbd "C-c C-e") 'git-gutter+-commit-toggle-allow-empty)
+    (define-key map (kbd "C-c C-u") 'git-gutter+-commit-toggle-author)
+    (define-key map (kbd "C-c C-d") 'git-gutter+-commit-toggle-date)
+    (define-key map (kbd "C-c C-b") 'git-commit-ack)
+    (define-key map (kbd "M-p") 'log-edit-previous-comment)
+    (define-key map (kbd "M-n") 'log-edit-next-comment)
+    map))
+
+(defface git-gutter+-commit-header-face
+  '((t :inherit font-lock-comment-face))
+  "Highlights the commit message header"
+  :group 'git-gutter+-faces)
+
+(defconst git-gutter+-commit-header-regex
+  (format "\\(?:.\\|\n\\)*?%s" (regexp-quote git-gutter+-commit-header-end)))
+
+(defconst git-gutter+-commit-summary-regexp
+  ;; Modify git-commit-summary-regexp to ignore the commit header
+  (let ((skip-commit-header-regex (format "\\(?:%s\\)?" git-gutter+-commit-header-regex)))
+    (concat "\\`"
+            skip-commit-header-regex
+            (substring git-commit-summary-regexp 2))))
+
+(defconst git-gutter+-commit-font-lock-keywords
+  `((,(concat "\\`" git-gutter+-commit-header-regex) . 'git-gutter+-commit-header-face)
+    ,@git-commit-mode-font-lock-keywords)
+  "Like `git-commit-mode-font-lock-keywords' but with commit header highlighting")
 
 
 ;;; Magit synchronization

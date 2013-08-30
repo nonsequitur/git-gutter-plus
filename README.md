@@ -127,17 +127,38 @@ lines within the region.
 
 #### `git-gutter+-commit`
 
-Commit staged changes with Magit.
+Commit staged changes.
+If nothing is staged, ask to stage the current buffer.
 
 #### `git-gutter+-stage-and-commit`
 
 Calls `git-gutter+-stage-hunks` followed by `git-gutter+-commit`.
 
+Committing
+----------
+
+The commit message buffer is based on
+[git-commit-mode](https://github.com/magit/git-modes).
+Besides the default `git-commit-mode` bindings, the following bindings
+are provided:
+
+* `C-c C-a` toggles the option to amend the previous commit.
+
+* `C-c C-e` toggles the option to allow an empty commit that
+  includes no changes.
+
+* `C-c C-u` toggles the option to edit the commit author.
+
+* `C-c C-d` toggles the option to edit the commit date.
+
+* `M-p`/`M-n` insert previous/next history commit message.
+
+`git-commit-ack` is re-bound to `C-c C-b`.
+
 Requirements
 ------------
 
 * Emacs 23 or higher
-* Magit, if you use the committing features.
 * [Git](http://git-scm.com/) 1.7.0 or higher
 
 Tramp
