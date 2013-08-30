@@ -791,45 +791,9 @@ If TYPE is not `modified', also remove all deletion (-) lines."
     (goto-char (point-min))
     (diff-mode)))
 
-;;; Use Magit for committing staged hunks.
-;;
-;; `magit-log-edit-commit' expects `magit-find-status-buffer' to return the Magit
-;; status buffer from which the commit edit was launched.
-;; But when the commit edit is started by git-gutter+, a status buffer is not always
-;; present.
-;; Therefore, `magit-log-edit-commit' is patched to use a custom version of
-;; `magit-find-status-buffer' that returns the current log edit buffer if no status
-;; buffer is opened. This works fine, since Magit will accept any buffer that has the
-;; correct `default-directory' set.
-;;
-;; Using Magit has two side effects:
-;; 1. .git/MERGE_MSG gets deleted after commiting. (But before that, its contents
-;; will have been pasted into the log edit buffer by Magit.)
-;; 2. The buffer local value of `process-environment' is erased in the buffer that
-;; started the commit edit. This is a bug in Magit that will be fixed in the next
-;; minor release.
-
-(defvar git-gutter+-orig-find-status-buffer)
-
-(defvar git-gutter+-find-status-buf-or-cur-buf
-  (lambda (&optional dir)
-    (or (funcall git-gutter+-orig-find-status-buffer dir)
-        (current-buffer))))
-
-(defadvice magit-log-edit-commit (around without-status-buffer compile activate)
-  ;; Rebind `magit-find-status-buffer' to `git-gutter+-find-status-buf-or-cur-buf'
-  ;; while `magit-log-edit-commit' is running.
-  ;; Using `flet' would have been much simpler, but it's deprecated since 24.3.
-  (setq git-gutter+-orig-find-status-buffer (symbol-function 'magit-find-status-buffer))
-  (fset 'magit-find-status-buffer git-gutter+-find-status-buf-or-cur-buf)
-  (unwind-protect
-      ad-do-it
-    (fset 'magit-find-status-buffer git-gutter+-orig-find-status-buffer)))
-
 
 ;;; Magit synchronization
 ;; Force Magit to refresh git-gutter+ when updating the VC mode line.
-;; Use the same strategy as for `magit-log-edit-commit'.
 
 (defvar git-gutter+-orig-vc-find-file-hook)
 
@@ -840,7 +804,10 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 
 (defadvice magit-update-vc-modeline (around refresh-git-gutter+ compile activate)
   ;; `magit-update-vc-modeline' calls `vc-find-file-hook' (a function!) on each
-  ;; buffer in the repo. Temporarily rebind it to `vc-find-file-hook-with-refresh'.
+  ;; buffer in the repo. Temporarily rebind it to `vc-find-file-hook-with-refresh',
+  ;; which calls git-gutter+-refresh after updating the VC mode line.
+  ;;
+  ;; Using `flet' would have been much simpler, but it's deprecated since 24.3.
   (setq git-gutter+-orig-vc-find-file-hook (symbol-function 'vc-find-file-hook))
   (fset 'vc-find-file-hook git-gutter+-vc-find-file-hook-with-refresh)
   (unwind-protect
