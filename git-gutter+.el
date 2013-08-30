@@ -132,6 +132,8 @@ calculated width looks wrong. (This can happen with some special characters.)"
   ;; The same as diff-hunk-header-re-unified
   "^@@ -\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? \\+\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? @@")
 
+(defalias 'git-gutter+-popup-hunk 'git-gutter+-show-hunk)
+
 (defmacro git-gutter+-awhen (test &rest body)
   "Anaphoric when."
   (declare (indent 1))
@@ -484,14 +486,14 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (interactive)
   (git-gutter+-awhen (git-gutter+-diffinfo-at-point)
     (save-window-excursion
-      (git-gutter+-popup-hunk it)
+      (git-gutter+-show-hunk it)
       (when (yes-or-no-p "Revert current hunk?")
         (git-gutter+-do-revert-hunk it)
         (save-buffer))
       (delete-window (get-buffer-window (get-buffer git-gutter+-popup-buffer))))))
 
-(defun git-gutter+-popup-hunk (&optional diffinfo)
-  "popup current diff hunk"
+(defun git-gutter+-show-hunk (&optional diffinfo)
+  "Show hunk at point in another window"
   (interactive)
   (git-gutter+-awhen (or diffinfo
                         (git-gutter+-diffinfo-at-point))
@@ -523,7 +525,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
       (forward-line (1- (plist-get diffinfo :start-line)))
       (when (buffer-live-p (get-buffer git-gutter+-popup-buffer))
         (save-window-excursion
-          (git-gutter+-popup-hunk))))))
+          (git-gutter+-show-hunk))))))
 
 (defun git-gutter+-previous-hunk (arg)
   "Move to previous diff hunk"

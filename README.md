@@ -51,7 +51,7 @@ Get Started
         (global-set-key (kbd "C-x p") 'git-gutter+-previous-hunk)
 
         ;;; Act on hunks
-        (global-set-key (kbd "C-x v =") 'git-gutter+-popup-hunk) ; Show detailed diff
+        (global-set-key (kbd "C-x v =") 'git-gutter+-show-hunk)
         (global-set-key (kbd "C-x r") 'git-gutter+-revert-hunk)
         ;; Stage hunk at point.
         ;; If region is active, stage all hunk lines within the region.
@@ -105,7 +105,7 @@ Jump to the next hunk.
 
 Jump to the previous hunk.
 
-#### `git-gutter+-popup-hunk`
+#### `git-gutter+-show-hunk`
 
 Show detailed diff for the hunk at point.
 
