@@ -116,6 +116,9 @@ calculated width looks wrong. (This can happen with some special characters.)"
   :type '(repeat symbol)
   :group 'git-gutter+)
 
+(defvar git-gutter+-mode-map
+  (make-sparse-keymap))
+
 (defvar git-gutter+-view-diff-function nil
   "Function to call for displaying diffs")
 
