@@ -82,27 +82,27 @@ calculated width looks wrong. (This can happen with some special characters.)"
   :group 'git-gutter+)
 
 (defface git-gutter+-separator
-    '((t (:foreground "cyan" :weight bold)))
+  '((t (:foreground "cyan" :weight bold)))
   "Face of the separator"
   :group 'git-gutter+)
 
 (defface git-gutter+-modified
-    '((t (:foreground "magenta" :weight bold)))
+  '((t (:foreground "magenta" :weight bold)))
   "Face for modified lines"
   :group 'git-gutter+)
 
 (defface git-gutter+-added
-    '((t (:foreground "green" :weight bold)))
+  '((t (:foreground "green" :weight bold)))
   "Face for added lines"
   :group 'git-gutter+)
 
 (defface git-gutter+-deleted
-    '((t (:foreground "red" :weight bold)))
+  '((t (:foreground "red" :weight bold)))
   "Face for deleted lines"
   :group 'git-gutter+)
 
 (defface git-gutter+-unchanged
-    '((t (:background "yellow")))
+  '((t (:background "yellow")))
   "Face for unchanged lines"
   :group 'git-gutter+)
 
