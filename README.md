@@ -52,7 +52,7 @@ Get Started
 
         ;;; Act on hunks
         (global-set-key (kbd "C-x v =") 'git-gutter+-show-hunk)
-        (global-set-key (kbd "C-x r") 'git-gutter+-revert-hunk)
+        (global-set-key (kbd "C-x r") 'git-gutter+-revert-hunks)
         ;; Stage hunk at point.
         ;; If region is active, stage all hunk lines within the region.
         (global-set-key (kbd "C-x t") 'git-gutter+-stage-hunks)
@@ -112,9 +112,10 @@ Show detailed diff for the hunk at point.
 The hunk info is updated when you call
 `git-gutter+-next-hunk` and `git-gutter+-previous-hunk`.
 
-#### `git-gutter+-revert-hunk`
+#### `git-gutter+-revert-hunks`
 
-Revert hunk at point.
+Revert hunk at point. If region is active, revert all hunks
+within the region.
 
 #### `git-gutter+-stage-hunks`
 

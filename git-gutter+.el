@@ -138,6 +138,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
   "^@@ -\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? \\+\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? @@")
 
 (defalias 'git-gutter+-popup-hunk 'git-gutter+-show-hunk)
+(defalias 'git-gutter+-revert-hunk 'git-gutter+-revert-hunks)
 
 (defmacro git-gutter+-awhen (test &rest body)
   "Anaphoric when."
@@ -486,16 +487,25 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (modified (git-gutter+-delete-added-lines start-line end-line)
                   (git-gutter+-insert-deleted-lines content))))))
 
-(defun git-gutter+-revert-hunk ()
-  "Revert current hunk."
+(defun git-gutter+-revert-hunks ()
+  "Revert hunk at point. If region is active, revert all hunks within the region."
   (interactive)
-  (git-gutter+-awhen (git-gutter+-diffinfo-at-point)
+  (let* ((diffinfos (git-gutter+-selected-diffinfos))
+         (one-diffinfo-p (= 1 (length diffinfos))))
     (save-window-excursion
-      (git-gutter+-show-hunk it)
-      (when (yes-or-no-p "Revert current hunk?")
-        (git-gutter+-do-revert-hunk it)
+      (if one-diffinfo-p (git-gutter+-show-hunk (car diffinfos)))
+      (when (and diffinfos
+                 (yes-or-no-p (if one-diffinfo-p
+                                  "Revert hunk?"
+                                (format "Revert %d hunks?" (length diffinfos)))))
+        ;; Revert diffinfos in reverse so that earlier hunks don't invalidate the
+        ;; line number information of the later hunks.
+        (dolist (diffinfo (nreverse diffinfos))
+          (git-gutter+-do-revert-hunk diffinfo))
         (save-buffer))
-      (delete-window (get-buffer-window (get-buffer git-gutter+-popup-buffer))))))
+      (if one-diffinfo-p
+          (git-gutter+-awhen (get-buffer git-gutter+-popup-buffer)
+            (kill-buffer it))))))
 
 (defun git-gutter+-show-hunk (&optional diffinfo)
   "Show hunk at point in another window"
@@ -579,14 +589,18 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (let* ((line-range (if (use-region-p)
                          (cons (line-number-at-pos (region-beginning))
                                (line-number-at-pos (region-end)))))
-         (diffinfos (git-gutter+-diffinfos-to-stage line-range)))
+         (diffinfos (git-gutter+-selected-diffinfos line-range)))
     (when diffinfos
       (let ((error-msg (git-gutter+-stage-diffinfos diffinfos line-range)))
         (if error-msg
             (message "Error staging hunks:\n%s" error-msg))
         (git-gutter+-refresh)))))
 
-(defun git-gutter+-diffinfos-to-stage (line-range)
+(defun git-gutter+-selected-diffinfos (&optional line-range)
+  (unless line-range
+    (setq line-range (if (use-region-p)
+                         (cons (line-number-at-pos (region-beginning))
+                               (line-number-at-pos (region-end))))))
   (if line-range
       (git-gutter+-diffinfos-between-lines line-range)
     (git-gutter+-awhen (git-gutter+-diffinfo-at-point)
