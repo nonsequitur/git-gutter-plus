@@ -1017,7 +1017,7 @@ set remove it."
   (setq-local git-commit-summary-regexp git-gutter+-commit-summary-regexp)
   (setq font-lock-defaults '(git-gutter+-commit-font-lock-keywords t)))
 
-(defconst git-gutter+-commit-mode-map
+(setq git-gutter+-commit-mode-map
   (let ((map (copy-keymap git-commit-mode-map)))
     (define-key map (kbd "C-c C-c") 'git-gutter+-publish-commit)
     (define-key map (kbd "C-c C-k") 'git-gutter+-close-commit-edit-buffer)
