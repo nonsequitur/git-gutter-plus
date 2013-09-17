@@ -34,6 +34,12 @@
 (require 'log-edit)
 (require 'git-commit-mode)
 
+;; for magit
+(defvar git-gutter+-support-magit-mode nil)
+(when (require 'magit)
+  (setq git-gutter+-support-magit-mode t)
+  (defvar git-gutter+-magit-staged-file-list '()))
+
 (defgroup git-gutter+ nil
   "Manage Git hunks straight from the buffer"
   :prefix "git-gutter+-"
@@ -341,6 +347,28 @@ calculated width looks wrong. (This can happen with some special characters.)"
     (git-gutter+-remove-local-hooks)
     (git-gutter+-clear)))
 
+(defun git-gutter+-magit-stage/unstage-refresh ()
+  (remove-duplicates git-gutter+-magit-staged-file-list)
+  (dolist (refresh-file git-gutter+-magit-staged-file-list)
+    (save-window-excursion
+      (let ((refresh-buffer (get-buffer (file-name-nondirectory refresh-file))))
+        (when refresh-buffer
+          (set-buffer refresh-buffer)
+          (git-gutter+-refresh))))))
+
+(defun git-gutter+-magit-stage/unstage-hook-func ()
+  (when git-gutter+-support-magit-mode
+    (let (current-directory file-name full-file-path)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^\\s-*Modified\\s-+\\(.+\\)$" nil t)
+          (setq file-name (match-string-no-properties 1))
+          (setq full-file-path (concat (nth 1 (split-string
+                                               (or (buffer-file-name) default-directory) " "))
+                                       file-name))
+          (add-to-list 'git-gutter+-magit-staged-file-list full-file-path)))
+      (git-gutter+-magit-stage/unstage-refresh))))
+
 (defun git-gutter+-add-local-hooks ()
   (add-hook 'after-save-hook        'git-gutter+-refresh nil t)
   ;; Turn off `git-gutter+-mode' while reverting to prevent any redundant calls to
@@ -349,7 +377,11 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (add-hook 'change-major-mode-hook 'git-gutter+-reenable-after-major-mode-change nil t)
   (if git-gutter+-window-config-change-function
       (add-hook 'window-configuration-change-hook
-                git-gutter+-window-config-change-function nil t)))
+                git-gutter+-window-config-change-function nil t))
+  ;; for magit
+  (when git-gutter+-support-magit-mode
+    (add-hook 'magit-after-insert-staged-changes-hook    'git-gutter+-magit-stage/unstage-hook-func)
+    (add-hook 'magit-after-insert-unstaged-changes-hook  'git-gutter+-magit-stage/unstage-hook-func)))
 
 (defun git-gutter+-remove-local-hooks ()
   (remove-hook 'after-save-hook        'git-gutter+-refresh t)
