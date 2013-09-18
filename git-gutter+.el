@@ -888,6 +888,13 @@ If TYPE is not `modified', also remove all deletion (-) lines."
   "Toggle whether this will be an amendment to the previous commit.
 \(i.e., whether commit is run via 'git commit --amend')"
   (interactive)
+  ;; Remove the newline that 'git-commit-mode' adds to a new commit
+  ;; message buffer by default.  Omitting this results in an ugly visual
+  ;; gap between the commit message header and the previous commit
+  ;; message.
+  (when (git-gutter+-buffer-is-whitespace)
+    (erase-buffer))
+
   (let ((amend-was-already-set (git-gutter+-commit-get-field 'amend)))
     (git-gutter+-commit-toggle-field 'amend t)
     (unless amend-was-already-set
@@ -1014,8 +1021,7 @@ set remove it."
 ;; highlighting support for the commit message header.
 
 (define-derived-mode git-gutter+-commit-mode git-commit-mode "Git-Gutter-Commit"
-  (setq-local git-commit-summary-regexp git-gutter+-commit-summary-regexp)
-  (setq font-lock-defaults '(git-gutter+-commit-font-lock-keywords t)))
+  (setq font-lock-defaults (list (git-gutter+-commit-font-lock-keywords) t)))
 
 (setq git-gutter+-commit-mode-map
   (let ((map (copy-keymap git-commit-mode-map)))
@@ -1038,17 +1044,22 @@ set remove it."
 (defconst git-gutter+-commit-header-regex
   (concat "\\(?:.\\|\n\\)*?" (regexp-quote git-gutter+-commit-header-end)))
 
-(defconst git-gutter+-commit-summary-regexp
-  ;; Modify git-commit-summary-regexp to ignore the commit header
-  (let ((skip-commit-header-regex (format "\\(?:%s\\)?" git-gutter+-commit-header-regex)))
-    (concat "\\`"
-            skip-commit-header-regex
-            (substring git-commit-summary-regexp 2))))
+(defconst git-gutter+-skip-commit-header-regex
+  (concat "\\`\\(?:" git-gutter+-commit-header-regex "\\)?"))
 
-(defconst git-gutter+-commit-font-lock-keywords
+;; Modify git-commit-summary-regexp to ignore the commit header
+(defadvice git-commit-summary-regexp
+  (after ignore-git-gutter+-commit-header activate compile)
+  (if (eq major-mode 'git-gutter+-commit-mode)
+      (setq ad-return-value
+            (concat git-gutter+-skip-commit-header-regex
+                    (substring ; Remove leading "\\`"
+                     ad-return-value 2)))))
+
+(defun git-gutter+-commit-font-lock-keywords ()
+  "Like `git-commit-mode-font-lock-keywords' but with commit header highlighting"
   `((,(concat "\\`" git-gutter+-commit-header-regex) . 'git-gutter+-commit-header-face)
-    ,@git-commit-mode-font-lock-keywords)
-  "Like `git-commit-mode-font-lock-keywords' but with commit header highlighting")
+    ,@(git-commit-mode-font-lock-keywords)))
 
 
 ;;; Magit synchronization
