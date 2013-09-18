@@ -1036,7 +1036,7 @@ set remove it."
   :group 'git-gutter+-faces)
 
 (defconst git-gutter+-commit-header-regex
-  (format "\\(?:.\\|\n\\)*?%s" (regexp-quote git-gutter+-commit-header-end)))
+  (concat "\\(?:.\\|\n\\)*?" (regexp-quote git-gutter+-commit-header-end)))
 
 (defconst git-gutter+-commit-summary-regexp
   ;; Modify git-commit-summary-regexp to ignore the commit header
