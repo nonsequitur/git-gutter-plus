@@ -1014,8 +1014,7 @@ set remove it."
 ;; highlighting support for the commit message header.
 
 (define-derived-mode git-gutter+-commit-mode git-commit-mode "Git-Gutter-Commit"
-  (setq-local git-commit-summary-regexp git-gutter+-commit-summary-regexp)
-  (setq font-lock-defaults '(git-gutter+-commit-font-lock-keywords t)))
+  (setq font-lock-defaults (list (git-gutter+-commit-font-lock-keywords) t)))
 
 (defconst git-gutter+-commit-mode-map
   (let ((map (copy-keymap git-commit-mode-map)))
@@ -1038,17 +1037,24 @@ set remove it."
 (defconst git-gutter+-commit-header-regex
   (format "\\(?:.\\|\n\\)*?%s" (regexp-quote git-gutter+-commit-header-end)))
 
-(defconst git-gutter+-commit-summary-regexp
-  ;; Modify git-commit-summary-regexp to ignore the commit header
-  (let ((skip-commit-header-regex (format "\\(?:%s\\)?" git-gutter+-commit-header-regex)))
-    (concat "\\`"
-            skip-commit-header-regex
-            (substring git-commit-summary-regexp 2))))
+(defconst git-gutter+-commit-mode-summary-font-lock-keywords-rep
+  (replace-regexp-in-string "\\\\" "\\\\\\\\"
+                            (concat "\\`\\(?:"
+                                    git-gutter+-commit-header-regex
+                                    "\\)?")))
 
-(defconst git-gutter+-commit-font-lock-keywords
+(defadvice git-commit-mode-summary-font-lock-keywords
+  (after git-gutter+-support (&optional errors) activate)
+  (if (eq major-mode 'git-gutter+-commit-mode)
+      (setcar ad-return-value
+              (replace-regexp-in-string
+               "\\\\`" git-gutter+-commit-mode-summary-font-lock-keywords-rep
+               (car ad-return-value)))))
+
+(defun git-gutter+-commit-font-lock-keywords ()
+  "Like `git-commit-mode-font-lock-keywords' but with commit header highlighting"
   `((,(concat "\\`" git-gutter+-commit-header-regex) . 'git-gutter+-commit-header-face)
-    ,@git-commit-mode-font-lock-keywords)
-  "Like `git-commit-mode-font-lock-keywords' but with commit header highlighting")
+    ,@(git-commit-mode-font-lock-keywords)))
 
 
 ;;; Magit synchronization
