@@ -354,7 +354,8 @@ calculated width looks wrong. (This can happen with some special characters.)"
       (let ((refresh-buffer (get-buffer (file-name-nondirectory refresh-file))))
         (when refresh-buffer
           (set-buffer refresh-buffer)
-          (git-gutter+-refresh))))))
+          (git-gutter+-refresh)))))
+  (setq git-gutter+-magit-staged-file-list '()))
 
 (defun git-gutter+-magit-stage/unstage-hook-func ()
   (when git-gutter+-support-magit-mode
