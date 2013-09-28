@@ -721,9 +721,9 @@ If TYPE is not `modified', also remove all deletion (-) lines."
         selected-lines)
     (save-excursion
       (forward-line first-line-selected)
-      (let ((start-point (point)))
+      (let ((selection-start (point)))
         (forward-line num-lines-selected)
-        (setq selected-lines (buffer-substring start-point (point)))))
+        (setq selected-lines (buffer-substring selection-start (point)))))
     (save-excursion
       (if (eq type 'modified) (forward-line del-len)) ; skip over deletion (-) lines
       (delete-region (point) (point-max))
