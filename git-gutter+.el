@@ -35,10 +35,12 @@
 (require 'git-commit-mode)
 
 ;; for magit
-(defvar git-gutter+-support-magit-mode nil)
+(defvar git-gutter+/support-magit-mode nil)
 (when (require 'magit)
-  (setq git-gutter+-support-magit-mode t)
-  (defvar git-gutter+-magit-staged-file-list '()))
+  (setq git-gutter+/support-magit-mode t)
+  (defvar git-gutter+/last-magit-buf-name nil)
+  (defvar git-gutter+/magit-before-staged-files '())
+  (defvar git-gutter+/magit-staged-files '()))
 
 (defgroup git-gutter+ nil
   "Manage Git hunks straight from the buffer"
@@ -347,29 +349,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
     (git-gutter+-remove-local-hooks)
     (git-gutter+-clear)))
 
-(defun git-gutter+-magit-stage/unstage-refresh ()
-  (remove-duplicates git-gutter+-magit-staged-file-list)
-  (dolist (refresh-file git-gutter+-magit-staged-file-list)
-    (save-window-excursion
-      (let ((refresh-buffer (get-buffer (file-name-nondirectory refresh-file))))
-        (when refresh-buffer
-          (set-buffer refresh-buffer)
-          (git-gutter+-refresh)))))
-  (setq git-gutter+-magit-staged-file-list '()))
-
-(defun git-gutter+-magit-stage/unstage-hook-func ()
-  (when git-gutter+-support-magit-mode
-    (let (current-directory file-name full-file-path)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward "^\\s-*Modified\\s-+\\(.+\\)$" nil t)
-          (setq file-name (match-string-no-properties 1))
-          (setq full-file-path (concat (nth 1 (split-string
-                                               (or (buffer-file-name) default-directory) " "))
-                                       file-name))
-          (add-to-list 'git-gutter+-magit-staged-file-list full-file-path)))
-      (git-gutter+-magit-stage/unstage-refresh))))
-
 (defun git-gutter+-add-local-hooks ()
   (add-hook 'after-save-hook        'git-gutter+-refresh nil t)
   ;; Turn off `git-gutter+-mode' while reverting to prevent any redundant calls to
@@ -380,9 +359,29 @@ calculated width looks wrong. (This can happen with some special characters.)"
       (add-hook 'window-configuration-change-hook
                 git-gutter+-window-config-change-function nil t))
   ;; for magit
-  (when git-gutter+-support-magit-mode
-    (add-hook 'magit-after-insert-staged-changes-hook    'git-gutter+-magit-stage/unstage-hook-func)
-    (add-hook 'magit-after-insert-unstaged-changes-hook  'git-gutter+-magit-stage/unstage-hook-func)))
+  (when git-gutter+/support-magit-mode
+    (add-hook 'magit-refresh-status-hook 'git-gutter+/magit-hook-func)))
+
+(defun git-gutter+/magit-hook-func ()
+  (when git-gutter+/support-magit-mode
+    (setq git-gutter+/magit-before-staged-files git-gutter+/magit-staged-files)
+    (setq git-gutter+/magit-staged-files '())
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward "^Staged changes:$" nil t)
+        (while (re-search-forward "^\\s-*Modified\\s-+\\(.+\\)$" nil t)
+          (add-to-list 'git-gutter+/magit-staged-files (match-string-no-properties 1)))))
+    (git-gutter+/refresh-if-need)))
+
+(defun git-gutter+/refresh-if-need ()
+  (let ((staged-files   (set-difference git-gutter+/magit-before-staged-files
+                                        git-gutter+/magit-staged-files))
+        (unstaged-files (set-difference git-gutter+/magit-staged-files
+                                        git-gutter+/magit-before-staged-files)))
+    (dolist (file-need-to-be-refreshed (append staged-files unstaged-files))
+      (when file-need-to-be-refreshed
+        (with-current-buffer (get-buffer file-need-to-be-refreshed)
+          (git-gutter+-refresh))))))
 
 (defun git-gutter+-remove-local-hooks ()
   (remove-hook 'after-save-hook        'git-gutter+-refresh t)
