@@ -34,6 +34,14 @@
 (require 'log-edit)
 (require 'git-commit-mode)
 
+;; for magit
+(defvar git-gutter+/support-magit-mode nil)
+(when (require 'magit)
+  (setq git-gutter+/support-magit-mode t)
+  (defvar git-gutter+/last-magit-buf-name nil)
+  (defvar git-gutter+/before-staged-files '())
+  (defvar git-gutter+/staged-files '()))
+
 (defgroup git-gutter+ nil
   "Manage Git hunks straight from the buffer"
   :prefix "git-gutter+-"
@@ -349,7 +357,40 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (add-hook 'change-major-mode-hook 'git-gutter+-reenable-after-major-mode-change nil t)
   (if git-gutter+-window-config-change-function
       (add-hook 'window-configuration-change-hook
-                git-gutter+-window-config-change-function nil t)))
+                git-gutter+-window-config-change-function nil t))
+  ;; for magit
+  (when git-gutter+/support-magit-mode
+    (add-hook 'magit-refresh-status-hook 'git-gutter+/magit-hook-func)))
+
+(defun git-gutter+/magit-hook-func ()
+  (when git-gutter+/support-magit-mode
+    (setq git-gutter+/before-staged-files git-gutter+/staged-files)
+    (setq git-gutter+/staged-files '())
+    (if (string= git-gutter+/last-magit-buf-name (buffer-name))
+        (save-window-excursion
+          (goto-char (point-min))
+          (when (re-search-forward "^Staged changes:$" nil t)
+            (while (re-search-forward "^\\s-*Modified\\s-+\\(.+\\)$" nil t)
+              (add-to-list 'git-gutter+/staged-files (match-string-no-properties 1))))
+          (git-gutter+/refresh-if-need))
+      (let ()
+        (setq git-gutter+/before-staged-files '())
+        (setq git-gutter+/last-magit-buf-name (buffer-name))))))
+
+(defun git-gutter+/refresh-if-need ()
+  (let ((staged-files
+         (set-difference git-gutter+/before-staged-files
+                         git-gutter+/staged-files))
+        (unstaged-files
+         (set-difference git-gutter+/staged-files
+                         git-gutter+/before-staged-files)))
+    (dolist (file-need-to-be-refreshed
+             (append staged-files unstaged-files))
+      (when file-need-to-be-refreshed
+        (let ((current-buffer (get-buffer file-need-to-be-refreshed)))
+          (when current-buffer
+            (with-current-buffer current-buffer
+              (git-gutter+-refresh))))))))
 
 (defun git-gutter+-remove-local-hooks ()
   (remove-hook 'after-save-hook        'git-gutter+-refresh t)
