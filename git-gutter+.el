@@ -531,6 +531,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (insert "\n")
         (goto-char (point-min))
         (diff-mode)
+        (view-mode)
         (pop-to-buffer (current-buffer))))))
 
 (defun git-gutter+-next-hunk (arg)
@@ -809,7 +810,8 @@ If TYPE is not `modified', also remove all deletion (-) lines."
     (let ((default-directory dir))
       (git-gutter+-call-git '("diff" "--staged") file))
     (goto-char (point-min))
-    (diff-mode)))
+    (diff-mode)
+    (view-mode)))
 
 (defsubst git-gutter+-abort-commit-when-no-changes (allow-empty amend)
   (unless (or amend
