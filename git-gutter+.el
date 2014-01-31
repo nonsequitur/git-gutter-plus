@@ -27,9 +27,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
-
+(require 'cl)
 (require 'tramp)
 (require 'log-edit)
 (require 'git-commit-mode)
@@ -1126,6 +1124,49 @@ set remove it."
   (unwind-protect
       ad-do-it
     (fset 'vc-find-file-hook git-gutter+-orig-vc-find-file-hook)))
+
+;; 2. Refresh git-gutter+ when a buffer is staged or unstaged
+(defvar git-gutter+-last-magit-head nil)
+(defvar git-gutter+-previously-staged-files nil)
+(defvar git-gutter+-staged-files nil)
+
+(eval-after-load 'magit
+  '(add-hook 'magit-refresh-status-hook 'git-gutter+-on-magit-refresh-status))
+
+(defun git-gutter+-on-magit-refresh-status ()
+  (let ((head (git-gutter+-get-magit-head)))
+    (when head
+      (setq git-gutter+-previously-staged-files git-gutter+-staged-files)
+      (setq git-gutter+-staged-files (git-gutter+-get-magit-staged-files))
+
+      (if (string= head git-gutter+-last-magit-head)
+          (git-gutter+-magit-refresh)
+        (setq git-gutter+-previously-staged-files git-gutter+-staged-files)
+        (setq git-gutter+-last-magit-head head)))))
+
+(defun git-gutter+-get-magit-head ()
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward "Head:\\s-+\\([0-9a-z]+\\)" nil t)
+      (match-string-no-properties 1))))
+
+(defun git-gutter+-get-magit-staged-files ()
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward "^Staged changes:$" nil t)
+      (let (staged-files)
+        (while (re-search-forward "^\\s-*Modified\\s-+\\(.+\\)$" nil t)
+          (push (match-string-no-properties 1) staged-files))
+        staged-files))))
+
+(defun git-gutter+-magit-refresh ()
+  (dolist (file-to-refresh (cl-set-exclusive-or git-gutter+-previously-staged-files
+                                                git-gutter+-staged-files
+                                                :test 'equal))
+    (let ((buffer (get-file-buffer file-to-refresh)))
+      (when buffer
+        (with-current-buffer buffer
+          (git-gutter+-refresh))))))
 
 (provide 'git-gutter+)
 
