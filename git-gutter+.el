@@ -1061,7 +1061,7 @@ set remove it."
 (defun git-gutter+-commit-font-lock-keywords ()
   "Like `git-commit-mode-font-lock-keywords' but with commit header highlighting"
   `((,(concat "\\`" git-gutter+-commit-header-regex) . 'git-gutter+-commit-header-face)
-    ,@(git-commit-mode-font-lock-keywords)))
+    ,@git-commit-mode-font-lock-keywords))
 
 
 ;;; Magit synchronization
