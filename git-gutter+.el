@@ -889,7 +889,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 \(i.e., whether commit is run via 'git commit --amend')"
   (interactive)
   ;; Remove the newline that 'git-commit-mode' adds to a new commit
-  ;; message buffer by default.  Omitting this results in an ugly visual
+  ;; message buffer by default. This prevents an ugly visual
   ;; gap between the commit message header and the previous commit
   ;; message.
   (when (git-gutter+-buffer-is-whitespace)
