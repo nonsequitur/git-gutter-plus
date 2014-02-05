@@ -18,7 +18,7 @@ Get Started
 
 * Install with package.el
 
-  Add [MELPA](http://melpa.milkbox.net/#installing) or [Marmalade](http://marmalade-repo.org) as a package source.
+  Add [MELPA](http://melpa.milkbox.net/#installing) as a package source.
   Run `M-x package-install git-gutter+`
 
 * Add the following to your .emacs file
