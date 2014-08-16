@@ -779,6 +779,11 @@ If TYPE is not `modified', also remove all deletion (-) lines."
   (git-gutter+-stage-hunks)
   (git-gutter+-commit))
 
+(defun git-gutter+-stage-and-commit-whole-buffer ()
+  (interactive)
+  (git-gutter+-stage-whole-buffer)
+  (git-gutter+-commit))
+
 (defun git-gutter+-save-window-config-if-needed ()
   ;; Only save the window config if the temporary buffers that get popped-up by
   ;; git-gutter+ are not already visible.
@@ -884,6 +889,11 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 (defun git-gutter+-stage-whole-buffer ()
   (git-gutter+-stage-hunks-between-lines (cons (line-number-at-pos (point-min))
                                               (line-number-at-pos (point-max)))))
+
+(defun git-gutter+-unstage-whole-buffer ()
+  (interactive)
+  (git-gutter+-call-git '("reset" "--quiet" "HEAD"))
+  (git-gutter+-refresh))
 
 (defun git-gutter+-anything-staged-p ()
   "Return t if the current repo has staged changes"

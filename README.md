@@ -52,7 +52,9 @@ Get Started
              ;; If region is active, stage all hunk lines within the region.
              (define-key git-gutter+-mode-map (kbd "C-x t") 'git-gutter+-stage-hunks)
              (define-key git-gutter+-mode-map (kbd "C-x c") 'git-gutter+-commit)
-             (define-key git-gutter+-mode-map (kbd "C-x C") 'git-gutter+-stage-and-commit)))
+             (define-key git-gutter+-mode-map (kbd "C-x C") 'git-gutter+-stage-and-commit)
+             (define-key git-gutter+-mode-map (kbd "C-x C-y") 'git-gutter+-stage-and-commit-whole-buffer)
+             (define-key git-gutter+-mode-map (kbd "C-x U") 'git-gutter+-unstage-whole-buffer)))
 
 
 [git-gutter-fringe+.el](https://github.com/nonsequitur/git-gutter-fringe-plus)
@@ -127,6 +129,15 @@ If nothing is staged, ask to stage the current buffer.
 
 Calls `git-gutter+-stage-hunks` followed by `git-gutter+-commit`.
 
+#### `git-gutter+-stage-and-commit-whole-buffer`
+
+Stages and commits the whole buffer.
+
+#### `git-gutter+-unstage-whole-buffer`
+
+Unstages all changes in the current buffer.
+Use this to undo any effects caused by git-gutter+-stage-hunks.
+
 Committing
 ----------
 
@@ -151,6 +162,8 @@ are provided:
 Changelog
 ---------
 ### master (unreleased)
+  * Added interactive functions `git-gutter+-stage-and-commit-whole-buffer` and
+    `git-gutter+-unstage-whole-buffer`
   * Fixed handling of `git-gutter+-diff-args`
 
 ### 0.1
