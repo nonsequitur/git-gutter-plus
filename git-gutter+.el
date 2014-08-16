@@ -42,7 +42,8 @@
 (defcustom git-gutter+-window-width nil
   "Character width of the gutter margin. Set this variable if the automatically
 calculated width looks wrong. (This can happen with some special characters.)"
-  :type 'integer
+  :type '(choice (const :tag "Automatically determined" nil)
+                 (integer :tag "Set manually"))
   :group 'git-gutter+)
 
 (defcustom git-gutter+-git-executable "git"
@@ -52,7 +53,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defcustom git-gutter+-diff-options nil
   "List of strings containing extra arguments to 'git diff'"
-  :type 'list
+  :type '(repeat (string :tag "Option"))
   :group 'git-gutter+)
 
 (defcustom git-gutter+-separator-sign nil
@@ -77,7 +78,8 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defcustom git-gutter+-unchanged-sign nil
   "Unchanged sign"
-  :type 'string
+  :type '(choice (const :tag "No sign" nil)
+                 (string :tag "Sign"))
   :group 'git-gutter+)
 
 (defcustom git-gutter+-hide-gutter nil
