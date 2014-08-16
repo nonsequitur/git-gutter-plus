@@ -187,8 +187,8 @@ calculated width looks wrong. (This can happen with some special characters.)"
             (file-name-as-directory root)))))))
 
 (defsubst git-gutter+-diff-args (file)
-  (delq nil (list "--no-pager" "diff" "--no-color" "--no-ext-diff" "-U0"
-                  git-gutter+-diff-options file)))
+  (delq nil `("--no-pager" "diff" "--no-color" "--no-ext-diff" "-U0"
+                  ,@git-gutter+-diff-options ,file)))
 
 (defun git-gutter+-diff (curfile)
   (let ((args (git-gutter+-diff-args curfile))
