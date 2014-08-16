@@ -602,14 +602,16 @@ calculated width looks wrong. (This can happen with some special characters.)"
 (defun git-gutter+-stage-hunks ()
   "Stage hunk at point. If region is active, stage all hunk lines within the region."
   (interactive)
-  (let* ((line-range (if (use-region-p)
-                         (cons (line-number-at-pos (region-beginning))
-                               (line-number-at-pos (region-end)))))
-         (diffinfos (git-gutter+-selected-diffinfos line-range)))
+  (git-gutter+-stage-hunks-between-lines (when (use-region-p)
+                                          (cons (line-number-at-pos (region-beginning))
+                                                (line-number-at-pos (region-end))))))
+
+(defun git-gutter+-stage-hunks-between-lines (line-range)
+  (let ((diffinfos (git-gutter+-selected-diffinfos line-range)))
     (when diffinfos
       (let ((error-msg (git-gutter+-stage-diffinfos diffinfos line-range)))
-        (if error-msg
-            (message "Error staging hunks:\n%s" error-msg))
+        (when error-msg
+          (message "Error staging hunks:\n%s" error-msg))
         (git-gutter+-refresh)))))
 
 (defun git-gutter+-selected-diffinfos (&optional line-range)
@@ -880,9 +882,8 @@ If TYPE is not `modified', also remove all deletion (-) lines."
         (ignore-errors (vc-find-file-hook))))))
 
 (defun git-gutter+-stage-whole-buffer ()
-  (save-excursion
-    (mark-whole-buffer)
-    (git-gutter+-stage-hunks)))
+  (git-gutter+-stage-hunks-between-lines (cons (line-number-at-pos (point-min))
+                                              (line-number-at-pos (point-max)))))
 
 (defun git-gutter+-anything-staged-p ()
   "Return t if the current repo has staged changes"
