@@ -150,6 +150,8 @@ are provided:
 
 Changelog
 ---------
+### master (unreleased)
+  * Fixed handling of `git-gutter+-diff-args`
 
 ### 0.1
   * New commit interface based on git-commit-mode.
