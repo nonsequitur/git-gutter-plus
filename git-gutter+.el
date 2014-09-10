@@ -1035,8 +1035,34 @@ set remove it."
 ;; Like git-commit-mode, but adds keybindings to git-gutter+ commands and
 ;; highlighting support for the commit message header.
 
-(define-derived-mode git-gutter+-commit-mode git-commit-mode "Git-Gutter-Commit"
-  (setq font-lock-defaults (list (git-gutter+-commit-font-lock-keywords) t)))
+(define-derived-mode git-gutter+-commit-mode text-mode "Git-Gutter-Commit"
+  ;; The following is copied from `git-commit-mode'.
+  ;; Directly deriving from `git-commit-mode' would pull in unwanted setup code
+  ;; that's incompatible with `git-gutter+-commit-mode'.
+  (setq font-lock-defaults (list (git-commit-mode-font-lock-keywords) t))
+  (set (make-local-variable 'font-lock-multiline) t)
+  (git-commit-font-lock-diff)
+  (setq fill-column git-commit-fill-column)
+  ;; Recognize changelog-style paragraphs
+  (set (make-local-variable 'paragraph-start)
+       (concat paragraph-start "\\|*\\|("))
+  ;; Setup comments
+  (set (make-local-variable 'comment-start) "#")
+  (set (make-local-variable 'comment-start-skip)
+       (concat "^" (regexp-quote comment-start) "+"
+               "\\s-*"))
+  (set (make-local-variable 'comment-use-syntax) nil)
+  ;; Do not remember point location in commit messages
+  (when (fboundp 'toggle-save-place)
+    (setq save-place nil))
+  ;; If the commit summary is empty, insert a newline after point
+  (when (string= "" (buffer-substring-no-properties
+                     (line-beginning-position)
+                     (line-end-position)))
+    (open-line 1))
+  (run-mode-hooks 'git-commit-mode-hook))
+
+(put 'git-gutter+-commit-mode 'derived-mode-parent 'git-commit-mode)
 
 (setq git-gutter+-commit-mode-map
   (let ((map (copy-keymap git-commit-mode-map)))
