@@ -1105,8 +1105,9 @@ set remove it."
 
 
 ;;; Magit synchronization
-;; Force Magit to refresh git-gutter+ when updating the VC mode line.
 
+;; 1. Force Magit to refresh git-gutter+ when updating the VC mode line.
+;;    This is not needed in newer Magit versions that use `auto-revert-mode'.
 (defvar git-gutter+-orig-vc-find-file-hook)
 
 (defvar git-gutter+-vc-find-file-hook-with-refresh
