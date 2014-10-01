@@ -7,7 +7,7 @@ View, stage and revert Git changes straight from the buffer.
 plugin for Sublime Text. It contains patches that haven't yet been added
 to [Git-Gutter](https://github.com/syohex/emacs-git-gutter).)
 
-![git-gutter](images/git-gutter-main.png)
+![git-gutter](images/stage-and-commit-animation.gif)
 
 [Changelog](#changelog-1)
 -----------
