@@ -799,15 +799,12 @@ If TYPE is not `modified', also remove all deletion (-) lines."
   (git-gutter+-commit-mode)
   (message "Type C-c C-c to commit (C-c C-k to cancel)."))
 
-(defsubst git-gutter+-pop-to-staged-changes-buffer ()
-  (let* ((buf    (get-buffer-create git-gutter+-staged-changes-buffer-name))
-         (window (get-buffer-window buf)))
-    (if window
-        ;; Buffer is already visible
-        (select-window window)
-      (if (<= (length (window-list)) 2)
-          (split-window))
-      (pop-to-buffer buf))))
+(defun git-gutter+-pop-to-staged-changes-buffer ()
+  ;; Shift the bias towards vertical splitting.
+  ;; If possible, the staged changes should be shown below the
+  ;; commit message buffer.
+  (let ((split-height-threshold 50))
+    (pop-to-buffer git-gutter+-staged-changes-buffer-name)))
 
 (defun git-gutter+-show-staged-changes (file dir)
   (save-selected-window
