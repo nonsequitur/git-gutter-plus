@@ -1060,6 +1060,7 @@ set remove it."
                      (line-beginning-position)
                      (line-end-position)))
     (open-line 1))
+  (set (make-local-variable 'log-edit-comment-ring-index) -1)
   (run-mode-hooks 'git-commit-mode-hook))
 
 (put 'git-gutter+-commit-mode 'derived-mode-parent 'git-commit-mode)
