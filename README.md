@@ -161,10 +161,17 @@ are provided:
 
 Changelog
 ---------
-### master (unreleased)
-  * Added interactive functions `git-gutter+-stage-and-commit-whole-buffer` and
-    `git-gutter+-unstage-whole-buffer`
-  * Fixed handling of `git-gutter+-diff-args`
+### 0.2
+  * 2 enhancements:
+    * New interactive functions `git-gutter+-stage-and-commit-whole-buffer` and
+      `git-gutter+-unstage-whole-buffer`
+    * Refresh gutter when a buffer is staged or unstaged in Magit
+  * 4 bug fixes:
+    * `M-p` is now guaranteed to insert the message of the previous commit
+    * Fixed compatibility with current versions of `git-commit-mode`
+    * `git-gutter+-diff-args` is now properly handled as a list of strings
+    * Fixed extraneous window splits that occured when displaying staged changes
+      before committing
 
 ### 0.1
   * New commit interface based on git-commit-mode.
