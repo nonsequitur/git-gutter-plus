@@ -136,7 +136,7 @@ Stages and commits the whole buffer.
 #### `git-gutter+-unstage-whole-buffer`
 
 Unstages all changes in the current buffer.
-Use this to undo any effects caused by git-gutter+-stage-hunks.
+Use this to undo any effects caused by `git-gutter+-stage-hunks`.
 
 Committing
 ----------
