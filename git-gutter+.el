@@ -498,6 +498,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
           (modified (git-gutter+-delete-added-lines start-line end-line)
                     (git-gutter+-insert-deleted-lines content)))))))
 
+;;;###autoload
 (defun git-gutter+-revert-hunks ()
   "Revert hunk at point. If region is active, revert all hunks within the region."
   (interactive)
@@ -518,6 +519,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
           (git-gutter+-awhen (get-buffer git-gutter+-popup-buffer)
             (kill-buffer it))))))
 
+;;;###autoload
 (defun git-gutter+-show-hunk (&optional diffinfo)
   "Show hunk at point in another window"
   (interactive)
@@ -534,6 +536,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (view-mode)
         (pop-to-buffer (current-buffer))))))
 
+;;;###autoload
 (defun git-gutter+-next-hunk (arg)
   "Move to next diff hunk"
   (interactive "p")
@@ -556,6 +559,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
           (save-window-excursion
             (git-gutter+-show-hunk)))))))
 
+;;;###autoload
 (defun git-gutter+-previous-hunk (arg)
   "Move to previous diff hunk"
   (interactive "p")
@@ -597,6 +601,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 ;;; Staging
 
+;;;###autoload
 (defun git-gutter+-stage-hunks ()
   "Stage hunk at point. If region is active, stage all hunk lines within the region."
   (interactive)
@@ -772,11 +777,13 @@ If TYPE is not `modified', also remove all deletion (-) lines."
     (git-gutter+-open-commit-edit-buffer dir)
     (git-gutter+-show-staged-changes file dir)))
 
+;;;###autoload
 (defun git-gutter+-stage-and-commit ()
   (interactive)
   (git-gutter+-stage-hunks)
   (git-gutter+-commit))
 
+;;;###autoload
 (defun git-gutter+-stage-and-commit-whole-buffer ()
   (interactive)
   (git-gutter+-stage-whole-buffer)
@@ -833,6 +840,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
     (goto-char (point-min))
     (looking-at-p "[ \t\n]*\\'")))
 
+;;;###autoload
 (defun git-gutter+-publish-commit ()
   "Publish commit"
   (interactive)
@@ -867,6 +875,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
         (git-gutter+-close-commit-edit-buffer)
         (git-gutter+-update-vc-modeline)))))
 
+;;;###autoload
 (defun git-gutter+-close-commit-edit-buffer ()
   "Abort edits and discard commit message being composed."
   (interactive)
@@ -885,6 +894,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
   (git-gutter+-stage-hunks-between-lines (cons (line-number-at-pos (point-min))
                                               (line-number-at-pos (point-max)))))
 
+;;;###autoload
 (defun git-gutter+-unstage-whole-buffer ()
   (interactive)
   (git-gutter+-call-git '("reset" "--quiet" "HEAD"))
@@ -894,6 +904,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
   "Return t if the current repo has staged changes"
   (not (zerop (git-gutter+-call-git '("diff" "--quiet" "--cached")))))
 
+;;;###autoload
 (defun git-gutter+-commit-toggle-amending ()
   "Toggle whether this will be an amendment to the previous commit.
 \(i.e., whether commit is run via 'git commit --amend')"
@@ -915,6 +926,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
       (insert (git-gutter+-get-last-commit-msg)
               "\n"))))
 
+;;;###autoload
 (defun git-gutter+-commit-toggle-allow-empty ()
   "Toggle whether this commit is allowed to be empty.
 \(i.e., whether commit is run via 'git commit --allow-empty')"
@@ -924,6 +936,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 (defun git-gutter+-format-author (author email)
   (format "%s <%s>" author email))
 
+;;;###autoload
 (defun git-gutter+-commit-toggle-author ()
   "Toggle whether this commit should have a user-defined author."
   (interactive)
@@ -932,6 +945,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
             (or (git-gutter+-get-cfg "user" "name") "Author Name")
             (or (git-gutter+-get-cfg "user" "email") "author@email"))))
 
+;;;###autoload
 (defun git-gutter+-commit-toggle-date ()
   "Toggle whether this commit should have a user-defined date."
   (interactive)
