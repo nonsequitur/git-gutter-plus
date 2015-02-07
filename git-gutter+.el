@@ -665,6 +665,17 @@ calculated width looks wrong. (This can happen with some special characters.)"
                                 (1+ (- start-line diff-start-line))
                                 (1+ (- end-line diff-start-line)))))))
 
+(unless (fboundp 'tramp-sh-handle-call-process-region)
+  (defun tramp-sh-handle-call-process-region
+    (start end program &optional delete buffer display &rest args)
+  "Like `call-process-region' for Tramp files."
+  (let ((tmpfile (tramp-compat-make-temp-file "")))
+    (write-region start end tmpfile)
+    (when delete (delete-region start end))
+    (unwind-protect
+        (apply 'process-file program tmpfile buffer display args)
+      (delete-file tmpfile)))))
+
 (defun git-gutter+-call-git-on-current-buffer (args)
   "Sends the current buffer contents to Git and replaces them with Git's output.
 
