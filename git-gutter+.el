@@ -680,9 +680,14 @@ calculated width looks wrong. (This can happen with some special characters.)"
   "Sends the current buffer contents to Git and replaces them with Git's output.
 
  RETURNS nil if Git ran successfully. Returns an error description otherwise."
-  (unless (zerop (apply #'call-process-region (point-min) (point-max)
-                        git-gutter+-git-executable t t nil args))
-    (buffer-string)))
+  (let ((call-process-region-func
+         (cond ((eq (tramp-find-foreign-file-name-handler default-directory)
+                    'tramp-sh-file-name-handler)
+                #'tramp-sh-handle-call-process-region)
+               (t #'call-process-region))))
+    (unless (zerop (apply call-process-region-func (point-min) (point-max)
+                          git-gutter+-git-executable t t nil args))
+      (buffer-string))))
 
 (defsubst git-gutter+-read-hunk-header (hunk)
   ;; @@ -{del-line},{del-len} +{add-line},{add-len} @@
