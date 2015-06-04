@@ -192,11 +192,13 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (let ((args (git-gutter+-diff-args curfile))
         (file (buffer-file-name))) ;; for tramp
     (with-temp-buffer
-      (when (zerop (git-gutter+-call-git args file))
-        (goto-char (point-min))
-        (let ((diff-header (git-gutter+-get-diff-header))
-              (diffinfos   (git-gutter+-get-diffinfos)))
-          (list diff-header diffinfos))))))
+      (if (zerop (git-gutter+-call-git args file))
+          (progn (goto-char (point-min))
+                 (let ((diff-header (git-gutter+-get-diff-header))
+                       (diffinfos   (git-gutter+-get-diffinfos)))
+                   (list diff-header diffinfos)))
+        (message "Error callling git diff:\n%s" (buffer-string))
+        nil))))
 
 (defun git-gutter+-get-diff-header ()
   (save-excursion
@@ -436,13 +438,15 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (remove-overlays (point-min) (point-max) 'git-gutter+ t))
 
 (defun git-gutter+-process-diff (curfile)
-  (destructuring-bind
-      (diff-header diffinfos) (git-gutter+-diff curfile)
-    (setq git-gutter+-diff-header diff-header
-          git-gutter+-diffinfos   diffinfos)
-    (save-restriction
-      (widen)
-      (funcall git-gutter+-view-diff-function diffinfos))))
+  (let ((diff-result (git-gutter+-diff curfile)))
+    (when diff-result
+      (destructuring-bind
+          (diff-header diffinfos) diff-result
+        (setq git-gutter+-diff-header diff-header
+              git-gutter+-diffinfos   diffinfos)
+        (save-restriction
+          (widen)
+          (funcall git-gutter+-view-diff-function diffinfos))))))
 
 (defun git-gutter+-search-near-diff-index (diffinfos is-reverse)
   (loop with current-line = (line-number-at-pos)
