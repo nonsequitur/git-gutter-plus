@@ -333,12 +333,15 @@ calculated width looks wrong. (This can happen with some special characters.)"
   :lighter    git-gutter+-lighter
   (if git-gutter+-mode
       (if (and (git-gutter+-file-buffer-p)
+               (not (file-symlink-p (buffer-file-name)))
                (git-gutter+-in-git-repository-p (buffer-file-name)))
           (progn
             (git-gutter+-add-local-hooks)
             (git-gutter+-refresh))
         (if (called-interactively-p 'any)
-            (message "No Git repo for current buffer"))
+            (message (if (and (buffer-file-name) (file-symlink-p (buffer-file-name)))
+                         "Symlinked files are not supported by Git-Gutter+"
+                       "No Git repo for current buffer")))
         (git-gutter+-mode -1))
     (git-gutter+-remove-local-hooks)
     (git-gutter+-clear)))
