@@ -19,7 +19,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;; Package-Requires: ((git-commit-mode "0.14"))
+;; Package-Requires: ((git-commit "0"))
 
 ;;; Commentary:
 ;;
@@ -30,7 +30,7 @@
 (require 'cl)
 (require 'tramp)
 (require 'log-edit)
-(require 'git-commit-mode)
+(require 'git-commit)
 
 (defgroup git-gutter+ nil
   "Manage Git hunks straight from the buffer"
@@ -1059,7 +1059,7 @@ set remove it."
   ;; that's incompatible with `git-gutter+-commit-mode'.
   (setq font-lock-defaults (list (git-commit-mode-font-lock-keywords) t))
   (set (make-local-variable 'font-lock-multiline) t)
-  (git-commit-font-lock-diff)
+  (git-commit-propertize-diff)
   (setq fill-column git-commit-fill-column)
   ;; Recognize changelog-style paragraphs
   (set (make-local-variable 'paragraph-start)
