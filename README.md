@@ -161,12 +161,18 @@ are provided:
 
 Changelog
 ---------
+### 0.3
+  * 3 fixes:
+    * Fixed staging and committing with Tramp
+    * Fixed errors with symlinked files
+    * Support the latest version of `git-commit'
+
 ### 0.2
   * 2 enhancements:
     * New interactive functions `git-gutter+-stage-and-commit-whole-buffer` and
       `git-gutter+-unstage-whole-buffer`
     * Refresh gutter when a buffer is staged or unstaged in Magit
-  * 4 bug fixes:
+  * 4 fixes:
     * `M-p` is now guaranteed to insert the message of the previous commit
     * Fixed compatibility with current versions of `git-commit-mode`
     * `git-gutter+-diff-args` is now properly handled as a list of strings
