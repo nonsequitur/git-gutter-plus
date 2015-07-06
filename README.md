@@ -142,7 +142,7 @@ Committing
 ----------
 
 The commit message buffer is based on
-[git-commit-mode](https://github.com/magit/git-modes).
+[git-commit](https://github.com/magit/magit/blob/master/lisp/git-commit.el).
 Besides the default `git-commit-mode` bindings, the following bindings
 are provided:
 
