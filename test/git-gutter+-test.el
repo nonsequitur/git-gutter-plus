@@ -1,4 +1,4 @@
-;;; test-git-gutter+.el --- Test for git-gutter+.el
+;;; test-git-gutter+.el --- Test for git-gutter+.el -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013 by Syohei YOSHIDA
 

@@ -1,4 +1,4 @@
-;;; git-gutter+.el --- Manage Git hunks straight from the buffer
+;;; git-gutter+.el --- Manage Git hunks straight from the buffer -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013 by Syohei YOSHIDA and contributors
 
@@ -300,7 +300,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
                      git-gutter+-added-sign
                      git-gutter+-deleted-sign)))
     (when git-gutter+-unchanged-sign
-      (add-to-list 'signs git-gutter+-unchanged-sign))
+      (push signs git-gutter+-unchanged-sign))
     (+ (apply 'max (mapcar 'git-gutter+-sign-width signs))
        (git-gutter+-sign-width git-gutter+-separator-sign))))
 
@@ -670,6 +670,9 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (git-gutter+-insert-hunk content type
                                 (1+ (- start-line diff-start-line))
                                 (1+ (- end-line diff-start-line)))))))
+
+;; Silence the byte-compiler
+(declare-function tramp-sh-handle-call-process-region nil)
 
 (unless (fboundp 'tramp-sh-handle-call-process-region)
   (defun tramp-sh-handle-call-process-region
@@ -1051,6 +1054,8 @@ set remove it."
 ;;; git-gutter+-commit-mode
 ;; Like git-commit-mode, but adds keybindings to git-gutter+ commands and
 ;; highlighting support for the commit message header.
+
+(defvar save-place) ; Silence byte-compiler
 
 (define-derived-mode git-gutter+-commit-mode text-mode "Git-Gutter-Commit"
   ;; The following is copied from `git-commit-mode'.
