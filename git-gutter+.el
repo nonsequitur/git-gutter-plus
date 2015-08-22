@@ -665,7 +665,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
     (if (not line-range)
         (git-gutter+-insert-hunk content type)
       (let ((diff-start-line (plist-get diffinfo :start-line))
-            (diff-end-line   (plist-get diffinfo :end-line))
             (start-line (car line-range))
             (end-line   (cdr line-range)))
         (git-gutter+-insert-hunk content type
