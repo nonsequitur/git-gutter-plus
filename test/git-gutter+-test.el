@@ -34,10 +34,6 @@
           (got (git-gutter+-root-directory file)))
       (should (string= expected got)))
 
-    ;; temporary directory maybe be version-controled
-    (let ((default-directory temporary-file-directory))
-      (should (null (git-gutter+-root-directory file))))
-
     ;; Files in .git/ directory are not version-controled
     (let ((default-directory (concat default-directory ".git/")))
       (should (null (git-gutter+-root-directory file))))))
