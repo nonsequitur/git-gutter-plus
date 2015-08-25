@@ -16,6 +16,8 @@ Jump to [Changelog](#changelog-1).
 Get Started
 -----------
 
+Use the predefined [use-package setup](#use-package-setup) or follow these steps:
+
 * Install with package.el
 
   Add [MELPA](http://melpa.milkbox.net/#installing) as a package source.
@@ -23,7 +25,7 @@ Get Started
 
 * Add the following to your .emacs file
 
-        (global-git-gutter+-mode t)
+        (global-git-gutter+-mode)
 
   If you want to disable git-gutter+ for some modes, set the variable
   `git-gutter+-disabled-modes`.
@@ -219,6 +221,24 @@ Tramp
 -----
 
 Git-Gutter supports TRAMP for remote file support.
+
+Use-Package Setup
+-----------------------
+
+    (use-package git-gutter+
+      :ensure t
+      :init (global-git-gutter+-mode)
+      :config (progn
+                (define-key git-gutter+-mode-map (kbd "C-x n") 'git-gutter+-next-hunk)
+                (define-key git-gutter+-mode-map (kbd "C-x p") 'git-gutter+-previous-hunk)
+                (define-key git-gutter+-mode-map (kbd "C-x v =") 'git-gutter+-show-hunk)
+                (define-key git-gutter+-mode-map (kbd "C-x r") 'git-gutter+-revert-hunks)
+                (define-key git-gutter+-mode-map (kbd "C-x t") 'git-gutter+-stage-hunks)
+                (define-key git-gutter+-mode-map (kbd "C-x c") 'git-gutter+-commit)
+                (define-key git-gutter+-mode-map (kbd "C-x C") 'git-gutter+-stage-and-commit)
+                (define-key git-gutter+-mode-map (kbd "C-x C-y") 'git-gutter+-stage-and-commit-whole-buffer)
+                (define-key git-gutter+-mode-map (kbd "C-x U") 'git-gutter+-unstage-whole-buffer))
+      :diminish (git-gutter+-mode . "gg"))
 
 This section of the manual hasn't yet been cleaned up. (But it's factually correct.)
 ------------------------------------------------------------------------------------
