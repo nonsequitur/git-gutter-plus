@@ -912,7 +912,8 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 
 (defun git-gutter+-unstage-whole-buffer ()
   (interactive)
-  (git-gutter+-call-git '("reset" "--quiet" "HEAD"))
+  (git-gutter+-call-git (list "reset" "--quiet" "HEAD" "--"
+                             (file-name-nondirectory buffer-file-name)))
   (git-gutter+-refresh))
 
 (defun git-gutter+-anything-staged-p ()
