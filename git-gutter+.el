@@ -1142,7 +1142,10 @@ set remove it."
   ;; `magit-update-vc-modeline' calls `vc-find-file-hook' (a function!) on each
   ;; buffer in the repo. Temporarily rebind it to `vc-find-file-hook-with-refresh',
   ;; which calls git-gutter+-refresh after updating the VC mode line.
-  ;;
+
+  ;; Silence the byte-compiler. The top-level defvar for `git-gutter+-orig-vc-find-file-hook'
+  ;; isn't sufficient for this compiled defadvice.
+  (defvar git-gutter+-orig-vc-find-file-hook)
   ;; Using `flet' would have been much simpler, but it's deprecated since 24.3.
   (setq git-gutter+-orig-vc-find-file-hook (symbol-function 'vc-find-file-hook))
   (fset 'vc-find-file-hook git-gutter+-vc-find-file-hook-with-refresh)
