@@ -20,7 +20,7 @@ Use the predefined [use-package setup](#use-package-setup) or follow these steps
 
 * Install with package.el
 
-  Add [MELPA](http://melpa.milkbox.net/#installing) as a package source.
+  Add [MELPA](https://melpa.org/#/getting-started) as a package source.
   Run `M-x package-install git-gutter+`
 
 * Add the following to your .emacs file
