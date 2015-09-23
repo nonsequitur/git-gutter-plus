@@ -112,6 +112,11 @@ Show detailed diff for the hunk at point.
 The hunk info is updated when you call
 `git-gutter+-next-hunk` and `git-gutter+-previous-hunk`.
 
+#### `git-gutter+-show-hunk-inline-at-point`
+
+An alternative to `git-gutter+-show-hunk`.
+Shows the diff by expanding it at point, without opening a new buffer.
+
 #### `git-gutter+-revert-hunks`
 
 Revert hunk at point. If region is active, revert all hunks

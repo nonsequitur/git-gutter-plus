@@ -535,6 +535,19 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (view-mode)
         (pop-to-buffer (current-buffer))))))
 
+(defun git-gutter+-show-hunk-inline-at-point ()
+  "Show hunk by temporarily expanding it at point"
+  (interactive)
+  (-when-let (diffinfo (git-gutter+-diffinfo-at-point))
+    (let ((diff (with-temp-buffer
+                  (insert (plist-get diffinfo :content) "\n")
+                  (diff-mode)
+                  ;; Force-fontify the invisible temp buffer
+                  (font-lock-default-function 'diff-mode)
+                  (font-lock-default-fontify-buffer)
+                  (buffer-string))))
+      (momentary-string-display diff (point-at-bol)))))
+
 (defun git-gutter+-next-hunk (arg)
   "Move to next diff hunk"
   (interactive "p")
