@@ -523,14 +523,13 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defun git-gutter+-show-hunk (&optional diffinfo)
   "Show hunk at point in another window"
-  (interactive)
-  (--when-let (or diffinfo
-                  (git-gutter+-diffinfo-at-point))
+  (interactive (list (git-gutter+-diffinfo-at-point)))
+  (when diffinfo
     (save-selected-window
       (with-current-buffer (get-buffer-create git-gutter+-popup-buffer)
         (setq buffer-read-only nil)
         (erase-buffer)
-        (insert (plist-get it :content))
+        (insert (plist-get diffinfo :content))
         (insert "\n")
         (goto-char (point-min))
         (diff-mode)
