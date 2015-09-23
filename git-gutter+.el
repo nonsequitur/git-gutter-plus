@@ -20,6 +20,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; Package-Requires: ((git-commit "0"))
+;; Keywords: git vc
 
 ;;; Commentary:
 ;;
