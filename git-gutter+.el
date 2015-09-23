@@ -535,6 +535,38 @@ calculated width looks wrong. (This can happen with some special characters.)"
         (view-mode)
         (pop-to-buffer (current-buffer))))))
 
+(defun git-gutter+-show-hunk-at-point (&optional diffinfo)
+  "Show hunk at point at point"
+  (interactive)
+  (git-gutter+-awhen (or diffinfo
+                        (git-gutter+-diffinfo-at-point))
+    (let ((diff-lines "")
+          (face nil))
+      (with-current-buffer (get-buffer-create git-gutter+-popup-buffer)
+        (setq buffer-read-only nil)
+        (erase-buffer)
+        (insert (plist-get it :content))
+        (insert "\n")
+        (goto-char (point-min))
+        (diff-mode)
+        (view-mode)
+        ;; workaround: buffer-substring doesn't returns text-properties (!?)
+        ;; (setq diff-lines (buffer-substring (point-min) (point-max)))
+        (while (not (eobp))
+          (if (looking-at "@") (setq face 'diff-hunk-header))
+          (if (looking-at "\+") (setq face 'diff-indicator-added))
+          (if (looking-at "-") (setq face 'diff-indicator-removed))
+          (setq diff-lines
+                (concat
+                 diff-lines
+                 (propertize (concat (buffer-substring (point) (point-at-eol)) "\n")
+                             'face face)))
+          (forward-line 1)
+          )
+        )
+      (momentary-string-display diff-lines (point-at-bol) 32)
+      (discard-input))))
+
 (defun git-gutter+-next-hunk (arg)
   "Move to next diff hunk"
   (interactive "p")
