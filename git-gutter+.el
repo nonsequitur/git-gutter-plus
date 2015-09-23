@@ -29,6 +29,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'dash)
 (require 'tramp)
 (require 'log-edit)
 (require 'git-commit)
@@ -147,12 +148,6 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defalias 'git-gutter+-popup-hunk 'git-gutter+-show-hunk)
 (defalias 'git-gutter+-revert-hunk 'git-gutter+-revert-hunks)
-
-(defmacro git-gutter+-awhen (test &rest body)
-  "Anaphoric when."
-  (declare (indent 1))
-  `(let ((it ,test))
-     (when it ,@body)))
 
 (defun git-gutter+-enable-default-display-mode ()
   (setq git-gutter+-view-diff-function 'git-gutter+-view-diff-infos
@@ -523,14 +518,14 @@ calculated width looks wrong. (This can happen with some special characters.)"
           (git-gutter+-do-revert-hunk diffinfo))
         (save-buffer))
       (if one-diffinfo-p
-          (git-gutter+-awhen (get-buffer git-gutter+-popup-buffer)
+          (--when-let (get-buffer git-gutter+-popup-buffer)
             (kill-buffer it))))))
 
 (defun git-gutter+-show-hunk (&optional diffinfo)
   "Show hunk at point in another window"
   (interactive)
-  (git-gutter+-awhen (or diffinfo
-                        (git-gutter+-diffinfo-at-point))
+  (--when-let (or diffinfo
+                  (git-gutter+-diffinfo-at-point))
     (save-selected-window
       (with-current-buffer (get-buffer-create git-gutter+-popup-buffer)
         (setq buffer-read-only nil)
@@ -627,7 +622,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
                                (line-number-at-pos (region-end))))))
   (if line-range
       (git-gutter+-diffinfos-between-lines line-range)
-    (git-gutter+-awhen (git-gutter+-diffinfo-at-point)
+    (--when-let (git-gutter+-diffinfo-at-point)
       (list it))))
 
 (defsubst git-gutter+-diffinfo-between-lines-p (diffinfo start-line end-line)
