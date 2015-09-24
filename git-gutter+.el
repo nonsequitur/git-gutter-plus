@@ -157,21 +157,27 @@ calculated width looks wrong. (This can happen with some special characters.)"
 (unless git-gutter+-view-diff-function
   (git-gutter+-enable-default-display-mode))
 
-(defun git-gutter+-call-git (args &optional file)
-  (if (and file (file-remote-p file))
-      (apply #'process-file git-gutter+-git-executable nil t nil args)
-    (apply #'call-process git-gutter+-git-executable nil t nil args)))
+(defun git-gutter+-call-git (args &optional file output-destination)
+  "Calls Git synchronously. Returns t on zero exit code, nil otherwise"
+  (zerop (if (and file (file-remote-p file))
+             (apply #'process-file git-gutter+-git-executable nil output-destination nil args)
+           (apply #'call-process git-gutter+-git-executable nil output-destination nil args))))
+
+(defun git-gutter+-insert-git-output (args &optional file)
+  "Inserts stdout from Git into the current buffer, ignores stderr.
+Returns t on zero exit code, nil otherwise."
+  (git-gutter+-call-git args file '(t nil)))
 
 (defun git-gutter+-in-git-repository-p (file)
   (with-temp-buffer
-    (when (zerop (git-gutter+-call-git '("rev-parse" "--is-inside-work-tree") file))
+    (when (git-gutter+-insert-git-output '("rev-parse" "--is-inside-work-tree") file)
       (goto-char (point-min))
       (string= "true" (buffer-substring-no-properties
                        (point) (line-end-position))))))
 
 (defun git-gutter+-root-directory (file)
   (with-temp-buffer
-    (when (zerop (git-gutter+-call-git '("rev-parse" "--show-toplevel") file))
+    (when (git-gutter+-insert-git-output '("rev-parse" "--show-toplevel") file)
       (goto-char (point-min))
       (let ((root (buffer-substring-no-properties (point) (line-end-position))))
         (unless (string= root "")
@@ -185,7 +191,7 @@ calculated width looks wrong. (This can happen with some special characters.)"
   (let ((args (git-gutter+-diff-args curfile))
         (file (buffer-file-name))) ;; for tramp
     (with-temp-buffer
-      (if (zerop (git-gutter+-call-git args file))
+      (if (git-gutter+-insert-git-output args file)
           (progn (goto-char (point-min))
                  (let ((diff-header (git-gutter+-get-diff-header))
                        (diffinfos   (git-gutter+-get-diffinfos)))
@@ -841,7 +847,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
     (setq buffer-read-only nil)
     (erase-buffer)
     (let ((default-directory dir))
-      (git-gutter+-call-git '("diff" "--staged") file))
+      (git-gutter+-insert-git-output '("diff" "--staged") file))
     (goto-char (point-min))
     (diff-mode)
     (view-mode)))
@@ -922,7 +928,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 
 (defun git-gutter+-anything-staged-p ()
   "Return t if the current repo has staged changes"
-  (not (zerop (git-gutter+-call-git '("diff" "--quiet" "--cached")))))
+  (not (git-gutter+-call-git '("diff" "--quiet" "--cached"))))
 
 (defun git-gutter+-commit-toggle-amending ()
   "Toggle whether this will be an amendment to the previous commit.
@@ -982,7 +988,7 @@ If TYPE is not `modified', also remove all deletion (-) lines."
 
 (defun git-gutter+-git-output (args)
   (with-temp-buffer
-    (git-gutter+-call-git args)
+    (git-gutter+-insert-git-output args)
     ;; Delete trailing newlines
     (goto-char (point-min))
     (if (re-search-forward "\n+\\'" nil t)
