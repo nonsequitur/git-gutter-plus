@@ -164,21 +164,18 @@ calculated width looks wrong. (This can happen with some special characters.)"
 
 (defun git-gutter+-in-git-repository-p (file)
   (with-temp-buffer
-    (let ((args '("rev-parse" "--is-inside-work-tree")))
-      (when (zerop (git-gutter+-call-git args file))
-        (goto-char (point-min))
-        (string= "true" (buffer-substring-no-properties
-                         (point) (line-end-position)))))))
+    (when (zerop (git-gutter+-call-git '("rev-parse" "--is-inside-work-tree") file))
+      (goto-char (point-min))
+      (string= "true" (buffer-substring-no-properties
+                       (point) (line-end-position))))))
 
 (defun git-gutter+-root-directory (file)
   (with-temp-buffer
-    (let* ((args '("rev-parse" "--show-toplevel"))
-           (ret (git-gutter+-call-git args file)))
-      (when (zerop ret)
-        (goto-char (point-min))
-        (let ((root (buffer-substring-no-properties (point) (line-end-position))))
-          (unless (string= root "")
-            (file-name-as-directory root)))))))
+    (when (zerop (git-gutter+-call-git '("rev-parse" "--show-toplevel") file))
+      (goto-char (point-min))
+      (let ((root (buffer-substring-no-properties (point) (line-end-position))))
+        (unless (string= root "")
+          (file-name-as-directory root))))))
 
 (defsubst git-gutter+-diff-args (file)
   (delq nil `("--no-pager" "diff" "--no-color" "--no-ext-diff" "-U0"
