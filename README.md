@@ -168,6 +168,14 @@ are provided:
 
 Changelog
 ---------
+### 0.4
+  * 2 enhancements:
+    * Added `git-gutter+-show-hunk-inline-at-point`
+    * The Readme now contains a `use-package` quick-start setup
+  * 2 fixes:
+    * Fixed `git-gutter+-unstage-whole-buffer` to only unstage changes from the current buffer
+    * Various code cleanups
+
 ### 0.3
   * 3 fixes:
     * Fixed staging and committing with Tramp
