@@ -1168,10 +1168,11 @@ set remove it."
 (defvar git-gutter+-previously-staged-files nil)
 (defvar git-gutter+-staged-files nil)
 
+;; Older versions of magit
 (eval-after-load 'magit
-  ;; Older versions of magit
-  '(add-hook 'magit-refresh-status-hook 'git-gutter+-on-magit-refresh-status)
-  ;; Newer versions of magit
+  '(add-hook 'magit-refresh-status-hook 'git-gutter+-on-magit-refresh-status))
+;; Newer versions of magit
+(eval-after-load 'magit
   '(add-hook 'magit-refresh-buffer-hook 'git-gutter+-on-magit-refresh-status))
 
 (defun git-gutter+-on-magit-refresh-status ()
