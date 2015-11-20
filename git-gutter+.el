@@ -1168,8 +1168,11 @@ set remove it."
 (defvar git-gutter+-previously-staged-files nil)
 (defvar git-gutter+-staged-files nil)
 
-(eval-after-load 'magit
-  '(add-hook 'magit-refresh-status-hook 'git-gutter+-on-magit-refresh-status))
+(with-eval-after-load 'magit
+  ;; Old Magit versions
+  (add-hook 'magit-refresh-status-hook 'git-gutter+-on-magit-refresh-status)
+  ;; New Magit versions
+  (add-hook 'magit-status-refresh-hook 'git-gutter+-on-magit-refresh-status))
 
 (defun git-gutter+-on-magit-refresh-status ()
   (let ((head (git-gutter+-get-magit-head)))
@@ -1191,9 +1194,9 @@ set remove it."
 (defun git-gutter+-get-magit-staged-files ()
   (save-excursion
     (goto-char (point-min))
-    (when (re-search-forward "^Staged changes:$" nil t)
+    (when (re-search-forward "^Staged changes" nil t)
       (let (staged-files)
-        (while (re-search-forward "^\\s-*Modified\\s-+\\(.+\\)$" nil t)
+        (while (re-search-forward "^\\s-*[Mm]odified\\s-+\\(.+\\)$" nil t)
           (push (match-string-no-properties 1) staged-files))
         staged-files))))
 
