@@ -1173,7 +1173,7 @@ set remove it."
   '(add-hook 'magit-refresh-status-hook 'git-gutter+-on-magit-refresh-status))
 ;; Newer versions of magit
 (eval-after-load 'magit
-  '(add-hook 'magit-refresh-buffer-hook 'git-gutter+-on-magit-refresh-status))
+  '(add-hook 'magit-status-refresh-hook 'git-gutter+-on-magit-refresh-status))
 
 (defun git-gutter+-on-magit-refresh-status ()
   (let ((head (git-gutter+-get-magit-head)))
