@@ -571,7 +571,7 @@ Returns t on zero exit code, nil otherwise."
         (forward-line (1- (plist-get diffinfo :start-line)))
         (when (buffer-live-p (get-buffer git-gutter+-popup-buffer))
           (save-window-excursion
-            (git-gutter+-show-hunk)))))))
+            (git-gutter+-show-hunk diffinfo)))))))
 
 (defun git-gutter+-previous-hunk (arg)
   "Move to previous diff hunk"
