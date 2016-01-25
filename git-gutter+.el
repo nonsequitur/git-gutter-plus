@@ -33,6 +33,7 @@
 (require 'tramp)
 (require 'log-edit)
 (require 'git-commit)
+(require 'repeat)
 
 (defgroup git-gutter+ nil
   "Manage Git hunks straight from the buffer"
@@ -566,12 +567,27 @@ Returns t on zero exit code, nil otherwise."
                              (let ((next (if is-reverse (1+ index) (1- index))))
                                (mod (+ arg next) len))
                            (if is-reverse (1- (length diffinfos)) 0)))
-             (diffinfo (nth real-index diffinfos)))
+             (diffinfo (nth real-index diffinfos))
+             (repeat-char
+              (if (eq repeat-on-final-keystroke t)
+                  last-command-event
+                (car (memq last-command-event
+                           (listify-key-sequence
+                            repeat-on-final-keystroke))))))
         (goto-char (point-min))
         (forward-line (1- (plist-get diffinfo :start-line)))
         (when (buffer-live-p (get-buffer git-gutter+-popup-buffer))
           (save-window-excursion
-            (git-gutter+-show-hunk diffinfo)))))))
+            (git-gutter+-show-hunk diffinfo)))
+        (when repeat-char
+          (let ((map (make-sparse-keymap)))
+            (define-key map (vector repeat-char)
+              `(lambda ()
+                 (interactive)
+                 (git-gutter+-next-hunk ,arg)))
+            (cond ((fboundp 'set-transient-map) (set-transient-map map))
+                  ((fboundp 'set-temporary-overlay-map) (set-temporary-overlay-map map))
+                  (t))))))))
 
 (defun git-gutter+-previous-hunk (arg)
   "Move to previous diff hunk"
