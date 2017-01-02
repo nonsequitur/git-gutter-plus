@@ -599,6 +599,7 @@ Returns t on zero exit code, nil otherwise."
   (git-gutter+-clear)
   (let ((file (buffer-file-name)))
     (when (and file (file-exists-p file))
+      (setq file (file-truename file))
       (if (file-remote-p file)
           (let* ((repo-root (git-gutter+-root-directory file))
                  (default-directory (git-gutter+-remote-default-directory repo-root file)))
