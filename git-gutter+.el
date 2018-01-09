@@ -580,13 +580,24 @@ Returns t on zero exit code, nil otherwise."
 
 (defun git-gutter+-remote-default-directory (dir file)
   (let* ((vec (tramp-dissect-file-name file))
-         (method (aref vec 0))
-         (user (aref vec 1))
-         (host (aref vec 2)))
+         (vecisarray (eq 'vector (type-of vec)))
+         (method (if vecisarray
+                     (aref vec 0)
+                   (tramp-file-name-method vec)))
+         (user (if vecisarray
+                   (aref vec 1)
+                 (tramp-file-name-user vec)))
+         (host (if vecisarray
+                   (aref vec 2)
+                 (tramp-file-name-host vec))))
     (format "/%s:%s%s:%s" method (if user (concat user "@") "") host dir)))
 
 (defun git-gutter+-remote-file-path (dir file)
-  (let ((file (aref (tramp-dissect-file-name file) 3)))
+  (let* ((vec (tramp-dissect-file-name file))
+         (vecisarray (eq 'vector (type-of vec)))
+         (file (if vecisarray
+                   (aref vec 3)
+                 (tramp-file-name-localname vec))))
     (replace-regexp-in-string (concat "\\`" dir) "" file)))
 
 (defun git-gutter+-local-file-path (file)
