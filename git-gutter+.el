@@ -196,7 +196,7 @@ Returns t on zero exit code, nil otherwise."
                  (let ((diff-header (git-gutter+-get-diff-header))
                        (diffinfos   (git-gutter+-get-diffinfos)))
                    (list diff-header diffinfos)))
-        (message "Error callling git diff:\n%s" (buffer-string))
+        (message "Error calling git diff:\n%s" (buffer-string))
         nil))))
 
 (defun git-gutter+-get-diff-header ()
