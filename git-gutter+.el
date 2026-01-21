@@ -33,6 +33,7 @@
 (require 'tramp)
 (require 'log-edit)
 (require 'git-commit)
+(require 'repeat)
 
 (defgroup git-gutter+ nil
   "Manage Git hunks straight from the buffer"
@@ -566,12 +567,27 @@ Returns t on zero exit code, nil otherwise."
                              (let ((next (if is-reverse (1+ index) (1- index))))
                                (mod (+ arg next) len))
                            (if is-reverse (1- (length diffinfos)) 0)))
-             (diffinfo (nth real-index diffinfos)))
+             (diffinfo (nth real-index diffinfos))
+             (repeat-char
+              (if (eq repeat-on-final-keystroke t)
+                  last-command-event
+                (car (memq last-command-event
+                           (listify-key-sequence
+                            repeat-on-final-keystroke))))))
         (goto-char (point-min))
         (forward-line (1- (plist-get diffinfo :start-line)))
         (when (buffer-live-p (get-buffer git-gutter+-popup-buffer))
           (save-window-excursion
-            (git-gutter+-show-hunk diffinfo)))))))
+            (git-gutter+-show-hunk diffinfo)))
+        (when repeat-char
+          (let ((map (make-sparse-keymap)))
+            (define-key map (vector repeat-char)
+              `(lambda ()
+                 (interactive)
+                 (git-gutter+-next-hunk ,arg)))
+            (cond ((fboundp 'set-transient-map) (set-transient-map map))
+                  ((fboundp 'set-temporary-overlay-map) (set-temporary-overlay-map map))
+                  (t))))))))
 
 (defun git-gutter+-previous-hunk (arg)
   "Move to previous diff hunk"
@@ -1123,13 +1139,14 @@ set remove it."
   (concat "\\`\\(?:" git-gutter+-commit-header-regex "\\)?"))
 
 ;; Modify git-commit-summary-regexp to ignore the commit header
-(defadvice git-commit-summary-regexp
-  (after ignore-git-gutter+-commit-header activate compile)
-  (if (eq major-mode 'git-gutter+-commit-mode)
-      (setq ad-return-value
-            (concat git-gutter+-skip-commit-header-regex
-                    (substring ; Remove leading "\\`"
-                     ad-return-value 2)))))
+(defun git-gutter+-commit-summary-regexp-ignore-header (orig-fun &rest args)
+  "Ignore the commit header in git-gutter+-commit-mode."
+  (let ((result (apply orig-fun args)))
+    (if (eq major-mode 'git-gutter+-commit-mode)
+        (concat git-gutter+-skip-commit-header-regex
+                (substring result 2)) ; Remove leading "\\`"
+      result)))
+(advice-add 'git-commit-summary-regexp :around #'git-gutter+-commit-summary-regexp-ignore-header)
 
 (defun git-gutter+-commit-font-lock-keywords ()
   "Like `git-commit-mode-font-lock-keywords' but with commit header highlighting"
@@ -1148,20 +1165,19 @@ set remove it."
     (funcall git-gutter+-orig-vc-find-file-hook)
     (if git-gutter+-mode (git-gutter+-refresh))))
 
-(defadvice magit-update-vc-modeline (around refresh-git-gutter+ compile activate)
-  ;; `magit-update-vc-modeline' calls `vc-find-file-hook' (a function!) on each
-  ;; buffer in the repo. Temporarily rebind it to `vc-find-file-hook-with-refresh',
-  ;; which calls git-gutter+-refresh after updating the VC mode line.
-
-  ;; Silence the byte-compiler. The top-level defvar for `git-gutter+-orig-vc-find-file-hook'
-  ;; isn't sufficient for this compiled defadvice.
+(defun git-gutter+-magit-update-vc-modeline-refresh (orig-fun &rest args)
+  "Refresh git-gutter+ when magit updates VC modeline.
+`magit-update-vc-modeline' calls `vc-find-file-hook' (a function!) on each
+buffer in the repo. Temporarily rebind it to `vc-find-file-hook-with-refresh',
+which calls git-gutter+-refresh after updating the VC mode line."
   (defvar git-gutter+-orig-vc-find-file-hook)
   ;; Using `flet' would have been much simpler, but it's deprecated since 24.3.
   (setq git-gutter+-orig-vc-find-file-hook (symbol-function 'vc-find-file-hook))
   (fset 'vc-find-file-hook git-gutter+-vc-find-file-hook-with-refresh)
   (unwind-protect
-      ad-do-it
+      (apply orig-fun args)
     (fset 'vc-find-file-hook git-gutter+-orig-vc-find-file-hook)))
+(advice-add 'magit-update-vc-modeline :around #'git-gutter+-magit-update-vc-modeline-refresh)
 
 ;; 2. Refresh git-gutter+ when a buffer is staged or unstaged
 (defvar git-gutter+-last-magit-head nil)
