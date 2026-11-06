@@ -168,6 +168,9 @@ are provided:
 
 Changelog
 ---------
+### 0.5
+  * 1 fix:
+    * make commits (and more) work again, by `@analyticd` (use new `git-commit-font-lock-keywords-2`)
 ### 0.4
   * 2 enhancements:
     * Added `git-gutter+-show-hunk-inline-at-point`
