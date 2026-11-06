@@ -1072,7 +1072,7 @@ set remove it."
   ;; The following is copied from `git-commit-mode'.
   ;; Directly deriving from `git-commit-mode' would pull in unwanted setup code
   ;; that's incompatible with `git-gutter+-commit-mode'.
-  (setq font-lock-defaults (list (git-commit-mode-font-lock-keywords) t))
+  (setq font-lock-defaults (list git-commit-font-lock-keywords-2 t))
   (set (make-local-variable 'font-lock-multiline) t)
   (git-commit-propertize-diff)
   (setq fill-column git-commit-fill-column)
